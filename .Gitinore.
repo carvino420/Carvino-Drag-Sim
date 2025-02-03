@@ -1,0 +1,31 @@
+# Ignore Unity Auto-Generated Files (DO NOT Track These)
+Temp/
+Library/
+Logs/
+UserSettings/
+MemoryCaptures/
+
+# Ignore Build Files (Only Share Source Code, Not Final Builds)
+*.apk
+*.exe
+*.dll
+*.pdb
+
+# Ignore System & User-Specific Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Ignore Build Artifacts
+Builds/
+obj/
+*.pidb
+*.suo
+*.ilk
+*.pdb
+
+# Keep Cars, Tracks, and Game Assets
+!Assets/**/*.meta
+!ProjectSettings/
+!Packages/
