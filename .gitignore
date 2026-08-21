@@ -1,0 +1,36 @@
+# Unity generated folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+
+# Unity generated files and IDE state
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.unityproj
+*.tmp
+*.log
+*.blend1
+*.blend1.meta
+
+# Package and crash caches
+sysinfo.txt
+memorycaptures/
+crash-reports/
+
+# Local tooling and credentials
+.vs/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Keep source art and approved project assets under version control.

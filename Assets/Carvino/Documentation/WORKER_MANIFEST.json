@@ -1,0 +1,78 @@
+{
+  "project": "Carvino Drag Sim",
+  "version": "0.01",
+  "lead": "game-director",
+  "integrationBranch": "main",
+  "rules": [
+    "Only the game-director merges changes into a playable build.",
+    "Workers may read shared contracts but may not change another worker's owned files.",
+    "Gameplay systems communicate through the documented state and telemetry contracts.",
+    "Every change that affects a race must be tested in a Windows development build before merge."
+  ],
+  "workers": [
+    {
+      "id": "game-director",
+      "role": "Architecture, scope, integration, release approval",
+      "owns": ["Assets/Carvino/Documentation", "Assets/Carvino/Editor", "Assets/Carvino/Runtime/Integration"],
+      "canRead": ["Assets/Carvino"],
+      "outputs": ["integration decisions", "release checklist", "approved build"]
+    },
+    {
+      "id": "core-engineer",
+      "role": "Application state, saves, input, settings, performance foundations",
+      "owns": ["Assets/Carvino/Runtime/Core", "Assets/Carvino/Runtime/Input", "Assets/Carvino/Runtime/Settings"],
+      "canRead": ["Assets/Carvino/Contracts", "Assets/Carvino/Data"],
+      "outputs": ["persistent player state", "game flow services", "settings API"]
+    },
+    {
+      "id": "vehicle-engineer",
+      "role": "One authoritative engine, drivetrain, forced induction, fuel and damage model",
+      "owns": ["Assets/Carvino/Runtime/Vehicles/Engine", "Assets/Carvino/Runtime/Vehicles/Drivetrain", "Assets/Carvino/Runtime/Vehicles/Failures", "Assets/Carvino/Data/Engines", "Assets/Carvino/Data/Parts"],
+      "canRead": ["Assets/Carvino/Contracts", "Assets/Carvino/Runtime/Vehicles/Physics"],
+      "outputs": ["EngineState", "engine telemetry", "data-driven engine and part definitions"]
+    },
+    {
+      "id": "physics-engineer",
+      "role": "Tires, contact patches, suspension, weight transfer, aerodynamics and surface grip",
+      "owns": ["Assets/Carvino/Runtime/Vehicles/Physics", "Assets/Carvino/Data/Surfaces"],
+      "canRead": ["Assets/Carvino/Contracts", "Assets/Carvino/Runtime/Vehicles/Engine"],
+      "outputs": ["traction result", "wheel-load telemetry", "straight-line vehicle motion"]
+    },
+    {
+      "id": "ui-tuning-engineer",
+      "role": "Menus, garage, HUD, dyno, ECU controls and controller navigation",
+      "owns": ["Assets/Carvino/Runtime/UI", "Assets/Carvino/Runtime/Tuning", "Assets/Carvino/Prefabs/UI"],
+      "canRead": ["Assets/Carvino/Contracts", "Assets/Carvino/Data"],
+      "outputs": ["player tune request", "read-only dashboard data", "accessible navigation"]
+    },
+    {
+      "id": "audio-engineer",
+      "role": "Engine, turbo, drivetrain, tire, ambient and UI audio",
+      "owns": ["Assets/Carvino/Runtime/Audio", "Assets/Carvino/Art/Audio"],
+      "canRead": ["Assets/Carvino/Contracts"],
+      "outputs": ["audio driven only by telemetry"]
+    },
+    {
+      "id": "art-content",
+      "role": "Original or licensed cars, parts, materials, tracks, props, LODs and collision meshes",
+      "owns": ["Assets/Carvino/Art", "Assets/Carvino/Prefabs/Vehicles", "Assets/Carvino/Prefabs/Environment"],
+      "canRead": ["Assets/Carvino/Documentation"],
+      "outputs": ["source-license record", "optimized assets", "prefabs"]
+    },
+    {
+      "id": "qa-integration",
+      "role": "Build checks, regression tests, event validation and defect reporting",
+      "owns": ["Assets/Carvino/Tests", "Assets/Carvino/Documentation/QA"],
+      "canRead": ["Assets/Carvino"],
+      "outputs": ["test results", "reproduction steps", "release recommendation"]
+    }
+  ],
+  "temporaryLegacyOwnership": {
+    "Assets/Carvino/Runtime/CarvinoCatalog.cs": "game-director",
+    "Assets/Carvino/Runtime/GarageController.cs": "ui-tuning-engineer",
+    "Assets/Carvino/Runtime/GarageInspectionController.cs": "ui-tuning-engineer",
+    "Assets/Carvino/Runtime/GarageSession.cs": "core-engineer",
+    "Assets/Carvino/Runtime/MainMenuController.cs": "ui-tuning-engineer",
+    "Assets/Carvino/Editor/PrototypeSceneBuilder.cs": "game-director"
+  }
+}
