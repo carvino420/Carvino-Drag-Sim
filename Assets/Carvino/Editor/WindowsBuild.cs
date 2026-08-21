@@ -13,8 +13,6 @@ namespace Carvino.Editor
         [MenuItem("Carvino/Build Windows Development")]
         public static void BuildDevelopment()
         {
-            // Recreate generated prototype scenes before every standalone build.
-            PrototypeSceneBuilder.Build();
             CarvinoBuildValidation.ValidateOrThrow();
 
             string directory = Path.GetDirectoryName(OutputPath);
@@ -39,6 +37,13 @@ namespace Carvino.Editor
             BuildReport report = BuildPipeline.BuildPlayer(options);
             if (report.summary.result != BuildResult.Succeeded)
                 throw new BuildFailedException("Carvino Windows build failed: " + report.summary.result);
+        }
+
+        [MenuItem("Carvino/Rebuild Prototype Scenes and Build Windows Development")]
+        public static void RebuildScenesThenBuildDevelopment()
+        {
+            PrototypeSceneBuilder.Build();
+            BuildDevelopment();
         }
     }
 }

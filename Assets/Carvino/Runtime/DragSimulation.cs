@@ -182,6 +182,17 @@ namespace Carvino
                 return value;
             }
         }
+
+        public TireCompoundSpec TireCompound
+        {
+            get
+            {
+                foreach (UpgradeSpec upgrade in upgrades)
+                    if (!string.IsNullOrEmpty(upgrade.tireCompoundId))
+                        return TireCompoundCatalog.Get(upgrade.tireCompoundId);
+                return TireCompoundCatalog.StreetRadial;
+            }
+        }
     }
 
     public sealed class DragSimulation
@@ -206,6 +217,20 @@ namespace Carvino
         {
             get
             {
+                int firstDrivenTire = build.vehicle.drivetrain == DrivetrainLayout.Fwd ? 0 : 2;
+                float measuredGrip = 0f;
+                int measuredPatches = 0;
+                for (int tireIndex = firstDrivenTire; tireIndex < firstDrivenTire + 2; tireIndex++)
+                {
+                    foreach (TireContactPatch patch in tires[tireIndex].Patches)
+                    {
+                        if (patch.FrictionCoefficient <= 0f) continue;
+                        measuredGrip += patch.FrictionCoefficient;
+                        measuredPatches++;
+                    }
+                }
+                if (measuredPatches > 0) return measuredGrip / measuredPatches * (1f - TireWear * .18f);
+
                 float heatFactor = Mathf.Clamp01(1f - Mathf.Abs(TireTemperatureC - 58f) / 45f);
                 float temperatureGrip = Mathf.Lerp(0.72f, 1.08f, heatFactor);
                 return build.Grip * surface.gripMultiplier * temperatureGrip * (1f - TireWear * 0.18f);
@@ -231,12 +256,13 @@ namespace Carvino
             float frontPressure = build.tune.frontTirePressurePsi;
             float rearPressure = build.tune.rearTirePressurePsi;
             float width = build.vehicle.drivetrain == DrivetrainLayout.Rwd ? 275f : 235f;
+            TireCompoundSpec compound = build.TireCompound;
             tires = new[]
             {
-                new TireAssembly { corner = WheelCorner.FrontLeft, PressurePsi = frontPressure, WidthMm = width },
-                new TireAssembly { corner = WheelCorner.FrontRight, PressurePsi = frontPressure, WidthMm = width },
-                new TireAssembly { corner = WheelCorner.RearLeft, PressurePsi = rearPressure, WidthMm = width },
-                new TireAssembly { corner = WheelCorner.RearRight, PressurePsi = rearPressure, WidthMm = width }
+                new TireAssembly { corner = WheelCorner.FrontLeft, PressurePsi = frontPressure, WidthMm = width, Compound = compound },
+                new TireAssembly { corner = WheelCorner.FrontRight, PressurePsi = frontPressure, WidthMm = width, Compound = compound },
+                new TireAssembly { corner = WheelCorner.RearLeft, PressurePsi = rearPressure, WidthMm = width, Compound = compound },
+                new TireAssembly { corner = WheelCorner.RearRight, PressurePsi = rearPressure, WidthMm = width, Compound = compound }
             };
         }
 

@@ -6,6 +6,45 @@ namespace Carvino
     public enum WheelCorner { FrontLeft, FrontRight, RearLeft, RearRight }
 
     [Serializable]
+    public sealed class TireCompoundSpec
+    {
+        public string id;
+        public float idealPressurePsi;
+        public float pressureWindowPsi;
+        public float optimalTemperatureC;
+        public float coldGripMultiplier;
+        public float peakGripMultiplier;
+        public float hotGripMultiplier;
+        public float carcassStiffnessNPerMeterAtIdealPressure;
+        public float referenceWidthMm;
+        public float loadSensitivity;
+    }
+
+    public static class TireCompoundCatalog
+    {
+        public static readonly TireCompoundSpec StreetRadial = new TireCompoundSpec
+        {
+            id = "street_radial", idealPressurePsi = 30f, pressureWindowPsi = 10f,
+            optimalTemperatureC = 50f, coldGripMultiplier = .82f, peakGripMultiplier = 1f,
+            hotGripMultiplier = .76f, carcassStiffnessNPerMeterAtIdealPressure = 245000f,
+            referenceWidthMm = 235f, loadSensitivity = .13f
+        };
+
+        public static readonly TireCompoundSpec DragSlick = new TireCompoundSpec
+        {
+            id = "drag_slick", idealPressurePsi = 18f, pressureWindowPsi = 8f,
+            optimalTemperatureC = 64f, coldGripMultiplier = .67f, peakGripMultiplier = 1.12f,
+            hotGripMultiplier = .82f, carcassStiffnessNPerMeterAtIdealPressure = 180000f,
+            referenceWidthMm = 275f, loadSensitivity = .09f
+        };
+
+        public static TireCompoundSpec Get(string id)
+        {
+            return id == DragSlick.id ? DragSlick : StreetRadial;
+        }
+    }
+
+    [Serializable]
     public sealed class TireContactPatch
     {
         public float LoadNewtons;
@@ -23,11 +62,10 @@ namespace Carvino
     [Serializable]
     public sealed class TireAssembly
     {
-        private static readonly float[] PatchWeights = { 0.27f, 0.46f, 0.27f };
-
         public WheelCorner corner;
         public float PressurePsi = 28f;
         public float WidthMm = 235f;
+        public TireCompoundSpec Compound = TireCompoundCatalog.StreetRadial;
         public TireContactPatch[] Patches { get; } = { new TireContactPatch(), new TireContactPatch(), new TireContactPatch() };
 
         public float AverageTemperatureC
@@ -52,26 +90,47 @@ namespace Carvino
 
         public float Update(float wheelLoadN, float requestedForceN, float surfaceGrip, float deltaTime)
         {
+            TireCompoundSpec compound = Compound ?? TireCompoundCatalog.StreetRadial;
+            float pressureError = (PressurePsi - compound.idealPressurePsi) / Mathf.Max(1f, compound.pressureWindowPsi);
+            float centerWeight = Mathf.Clamp(.46f + pressureError * .13f, .25f, .67f);
+            float shoulderWeight = (1f - centerWeight) * .5f;
+            float pressureRatio = Mathf.Clamp(PressurePsi / Mathf.Max(1f, compound.idealPressurePsi), .55f, 1.55f);
+            float widthRatio = Mathf.Clamp(WidthMm / Mathf.Max(1f, compound.referenceWidthMm), .72f, 1.35f);
+            float carcassStiffness = compound.carcassStiffnessNPerMeterAtIdealPressure * pressureRatio * Mathf.Sqrt(widthRatio);
+            float pressureGrip = Mathf.Lerp(1f, .76f, Mathf.Clamp01(Mathf.Abs(pressureError)));
+            float widthGrip = Mathf.Lerp(.94f, 1.06f, Mathf.InverseLerp(.72f, 1.35f, widthRatio));
             float totalCapacity = 0f;
             for (int index = 0; index < Patches.Length; index++)
             {
                 TireContactPatch patch = Patches[index];
-                patch.LoadNewtons = Mathf.Max(0f, wheelLoadN * PatchWeights[index]);
-                float pressureStiffness = Mathf.Max(140000f, PressurePsi * 10500f);
-                patch.DeflectionMeters = Mathf.Clamp(patch.LoadNewtons / pressureStiffness, 0.002f, 0.08f);
-                float contactLengthFactor = Mathf.Clamp01(0.35f + patch.DeflectionMeters * 12f);
-                float temperatureFactor = Mathf.Clamp01(1f - Mathf.Abs(patch.TemperatureC - 58f) / 45f);
-                float gripAtTemperature = Mathf.Lerp(0.72f, 1.08f, temperatureFactor);
-                float loadSensitivity = Mathf.Lerp(1f, 0.86f, Mathf.InverseLerp(500f, 4500f, patch.LoadNewtons));
-                patch.FrictionCoefficient = surfaceGrip * gripAtTemperature * loadSensitivity * contactLengthFactor;
+                float patchWeight = index == 1 ? centerWeight : shoulderWeight;
+                patch.LoadNewtons = Mathf.Max(0f, wheelLoadN * patchWeight);
+                patch.DeflectionMeters = Mathf.Clamp(patch.LoadNewtons / Mathf.Max(100000f, carcassStiffness), .002f, .08f);
+                float idealDeflection = Mathf.Lerp(.020f, .034f, Mathf.InverseLerp(.55f, 1.55f, 1f / pressureRatio));
+                float deflectionGrip = Mathf.Lerp(1f, .80f, Mathf.Clamp01(Mathf.Abs(patch.DeflectionMeters - idealDeflection) / .035f));
+                float temperatureGrip = TemperatureGrip(compound, patch.TemperatureC);
+                float loadSensitivity = Mathf.Lerp(1f, 1f - compound.loadSensitivity, Mathf.InverseLerp(500f, 4500f, patch.LoadNewtons));
+                patch.FrictionCoefficient = surfaceGrip * temperatureGrip * loadSensitivity * deflectionGrip * pressureGrip * widthGrip;
                 float patchCapacity = patch.LoadNewtons * patch.FrictionCoefficient;
-                float requestedPatchForce = requestedForceN * PatchWeights[index];
+                float requestedPatchForce = requestedForceN * patchWeight;
                 patch.SlipRatio = patchCapacity > 1f ? Mathf.Max(0f, requestedPatchForce / patchCapacity - 1f) : 1f;
-                float heatInput = patch.SlipRatio * 3.1f + Mathf.Clamp01(requestedPatchForce / Mathf.Max(1f, patchCapacity)) * 0.18f;
-                patch.TemperatureC = Mathf.Clamp(patch.TemperatureC + (heatInput - 0.055f) * deltaTime, 22f, 125f);
+                float heatInput = patch.SlipRatio * 3.1f + Mathf.Clamp01(requestedPatchForce / Mathf.Max(1f, patchCapacity)) * .18f;
+                patch.TemperatureC = Mathf.Clamp(patch.TemperatureC + (heatInput - .055f) * deltaTime, 22f, 125f);
                 totalCapacity += patchCapacity;
             }
             return totalCapacity;
+        }
+
+        private static float TemperatureGrip(TireCompoundSpec compound, float temperatureC)
+        {
+            if (temperatureC <= compound.optimalTemperatureC)
+            {
+                float warmup = Mathf.InverseLerp(22f, compound.optimalTemperatureC, temperatureC);
+                return Mathf.Lerp(compound.coldGripMultiplier, compound.peakGripMultiplier, warmup);
+            }
+
+            float overheat = Mathf.InverseLerp(compound.optimalTemperatureC, 125f, temperatureC);
+            return Mathf.Lerp(compound.peakGripMultiplier, compound.hotGripMultiplier, overheat);
         }
 
         public void Burnout(float deltaTime)

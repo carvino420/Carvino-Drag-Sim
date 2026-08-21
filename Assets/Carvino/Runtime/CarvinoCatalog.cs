@@ -42,6 +42,9 @@ namespace Carvino
         public float drivetrainEfficiencyMultiplier = 1f;
         public float drivenTractionMultiplier = 1f;
         public float shiftCutMultiplier = 1f;
+        // Empty keeps the vehicle's street tire. Tire upgrades select a data-owned
+        // compound rather than adding another hard-coded traction branch.
+        public string tireCompoundId;
     }
 
     [Serializable]
@@ -83,7 +86,7 @@ namespace Carvino
             new UpgradeSpec { id = "intake", displayName = "Raccon7 Street Intake", powerMultiplier = 1.035f, torqueMultiplier = 1.02f, price = 350 },
             new UpgradeSpec { id = "exhaust", displayName = "Raccon7 Free-Flow Exhaust", powerMultiplier = 1.045f, torqueMultiplier = 1.025f, massDeltaKg = -4f, price = 550 },
             new UpgradeSpec { id = "ecu", displayName = "VoltFire Tuned ECU", powerMultiplier = 1.04f, torqueMultiplier = 1.035f, price = 700 },
-            new UpgradeSpec { id = "slicks", displayName = "Hookline Drag Slicks", gripMultiplier = 1.24f, massDeltaKg = 3f, price = 900 },
+            new UpgradeSpec { id = "slicks", displayName = "Hookline Drag Slicks", gripMultiplier = 1.10f, tireCompoundId = "drag_slick", massDeltaKg = 3f, price = 900 },
             new UpgradeSpec { id = "weight", displayName = "Street Weight Reduction", massDeltaKg = -70f, price = 800 },
             new UpgradeSpec { id = "turbo_street", displayName = "Raccon7 Street Turbo Kit", massDeltaKg = 14f, price = 1700, turboMaxBoostPsi = 14f, turboSpoolRpm = 3100f, turboEfficiency = 0.79f, turboSafeBoostPsi = 12f },
             new UpgradeSpec { id = "injectors_850", displayName = "PulseMax 850cc Injectors", price = 780, fuelCapacityMultiplier = 1.75f },

@@ -18,17 +18,36 @@ namespace Carvino
             "Close Carvino Drag Sim. Your local progress is saved automatically."
         };
         private int selected;
+        private float previousVerticalAxis;
 
         private void Start() => GarageSession.Load();
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.JoystickButton4)) selected = (selected + options.Length - 1) % options.Length;
-            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.JoystickButton5)) selected = (selected + 1) % options.Length;
+            int navigation = ReadNavigation();
+            if (navigation != 0) selected = (selected + navigation + options.Length) % options.Length;
             if (Input.GetKeyDown(KeyCode.G)) selected = 2;
             if (Input.GetKeyDown(KeyCode.R)) selected = 1;
             if (Input.GetKeyDown(KeyCode.D)) selected = 3;
-            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.JoystickButton0)) Activate(selected);
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.JoystickButton0) || Input.GetKeyDown(KeyCode.JoystickButton7)) Activate(selected);
+        }
+
+        /// <summary>
+        /// Supports keyboard, controller bumpers, and the legacy Input Manager's Vertical axis.
+        /// Axis navigation fires only when the stick/D-pad crosses the threshold, preventing a held
+        /// controller direction from skipping through the whole menu in one frame sequence.
+        /// </summary>
+        private int ReadNavigation()
+        {
+            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.JoystickButton4)) return -1;
+            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.JoystickButton5)) return 1;
+
+            float vertical = Input.GetAxisRaw("Vertical");
+            int direction = 0;
+            if (vertical >= 0.6f && previousVerticalAxis < 0.6f) direction = -1;
+            if (vertical <= -0.6f && previousVerticalAxis > -0.6f) direction = 1;
+            previousVerticalAxis = vertical;
+            return direction;
         }
 
         private void Activate(int index)
@@ -65,7 +84,7 @@ namespace Carvino
                 GUI.color = previous;
             }
             DrawGuidePanel();
-            GUI.Label(new Rect(62, CarvinoUi.Height - 62, 700, 20), "Click a menu option, or use ↑ ↓ / controller and Enter / A.", TitleStyle(12, new Color(0.7f, 0.72f, 0.74f)));
+            GUI.Label(new Rect(62, CarvinoUi.Height - 62, 730, 20), "Click a menu option, or use ↑ ↓ / left stick / D-pad and Enter / A / Start.", TitleStyle(12, new Color(0.7f, 0.72f, 0.74f)));
             CarvinoUi.End(previousMatrix);
         }
 
