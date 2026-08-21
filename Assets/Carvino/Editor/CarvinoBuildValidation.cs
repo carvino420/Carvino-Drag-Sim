@@ -142,6 +142,42 @@ namespace Carvino.Editor
             hardPressureCheck.Step(0.02f, 1f, 1);
             Require(softPressureCheck.Tires[0].AverageDeflectionMeters > hardPressureCheck.Tires[0].AverageDeflectionMeters, "Lower tire pressure must increase tire deflection.");
 
+            DragBuild gearingBuild = new DragBuild
+            {
+                vehicle = CarvinoCatalog.Vehicles[0],
+                engine = CarvinoCatalog.FindEngine("d16"),
+                engineIsNew = true,
+                finalDrive = 4.1f,
+                tune = new TuneSettings { launchRpm = 4200f }
+            };
+            DragBuild tallFinalDriveBuild = new DragBuild
+            {
+                vehicle = CarvinoCatalog.Vehicles[0],
+                engine = CarvinoCatalog.FindEngine("d16"),
+                engineIsNew = true,
+                finalDrive = 3.1f,
+                tune = new TuneSettings { launchRpm = 4200f }
+            };
+            DragSimulation shortFinalDriveForce = new DragSimulation(gearingBuild);
+            DragSimulation tallFinalDriveForce = new DragSimulation(tallFinalDriveBuild);
+            shortFinalDriveForce.Step(.02f, 1f, 1);
+            tallFinalDriveForce.Step(.02f, 1f, 1);
+            Require(shortFinalDriveForce.CurrentOverallGearRatio > tallFinalDriveForce.CurrentOverallGearRatio, "A shorter final drive must expose a larger overall transmission ratio.");
+            Require(shortFinalDriveForce.AvailableDriveForceNewtons > tallFinalDriveForce.AvailableDriveForceNewtons * 1.2f, "Gear and final-drive ratio must multiply wheel torque and available launch force.");
+            Require(shortFinalDriveForce.WheelTorqueLbFt > 0f && shortFinalDriveForce.TireRollingRadiusMeters > .2f, "Driveline telemetry must expose wheel torque and a finite tire rolling radius.");
+
+            DragSimulation coastCheck = new DragSimulation(gearingBuild);
+            int coastGear = 1;
+            for (int frame = 0; frame < 250; frame++)
+            {
+                if (coastCheck.EngineRpm > gearingBuild.tune.shiftRpm && coastGear < 5) coastGear++;
+                coastCheck.Step(.02f, 1f, coastGear);
+            }
+            float coastStartSpeed = coastCheck.SpeedMps;
+            for (int frame = 0; frame < 100; frame++) coastCheck.Step(.02f, 0f, coastGear);
+            Require(coastStartSpeed > 3f && coastCheck.SpeedMps < coastStartSpeed, "Aerodynamic drag and rolling resistance must decelerate a coasting car.");
+            Require(coastCheck.AeroDragNewtons > 0f && coastCheck.RollingResistanceNewtons > 0f, "Longitudinal force telemetry must expose aero and rolling resistance.");
+
             SimulateQuarterMile(new DragBuild
             {
                 vehicle = CarvinoCatalog.Vehicles[1],

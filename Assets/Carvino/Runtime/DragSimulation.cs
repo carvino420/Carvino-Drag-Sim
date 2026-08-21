@@ -240,11 +240,22 @@ namespace Carvino
         public EngineState State { get; } = new EngineState();
         public float EngineRpm => State.Rpm;
         public bool Finished => DistanceMeters >= finishDistanceMeters;
+        public float TireRollingRadiusMeters => tireRollingRadiusMeters;
+        public float CurrentOverallGearRatio { get; private set; }
+        public float WheelTorqueLbFt { get; private set; }
+        public float AvailableDriveForceNewtons { get; private set; }
+        public float AppliedDriveForceNewtons { get; private set; }
+        public float AeroDragNewtons { get; private set; }
+        public float RollingResistanceNewtons { get; private set; }
+        public float DrivenAxleLoadNewtons { get; private set; }
+        public float LongitudinalAccelerationMps2 { get; private set; }
 
+        private static readonly float[] GearRatios = { 3.25f, 2.12f, 1.52f, 1.18f, 0.95f };
         private readonly DragBuild build;
         private readonly TireAssembly[] tires;
         private readonly TrackSurfaceSpec surface;
         private readonly float finishDistanceMeters;
+        private readonly float tireRollingRadiusMeters;
         private float previousAcceleration;
         private float shiftCutRemaining;
 
@@ -261,6 +272,11 @@ namespace Carvino
             float rearPressure = build.tune.rearTirePressurePsi;
             float width = build.vehicle.drivetrain == DrivetrainLayout.Rwd ? 275f : 235f;
             TireCompoundSpec compound = build.TireCompound;
+            // Until explicit wheel/tire dimensions move into VehicleSpec, use a
+            // representative loaded radius for each starter chassis. Keeping this
+            // value finite is essential: wheel force is wheel torque divided by
+            // rolling radius, rather than engine power divided by an arbitrary speed.
+            tireRollingRadiusMeters = build.vehicle.drivetrain == DrivetrainLayout.Rwd ? .335f : .305f;
             tires = new[]
             {
                 new TireAssembly { corner = WheelCorner.FrontLeft, PressurePsi = frontPressure, WidthMm = width, Compound = compound },
@@ -320,15 +336,18 @@ namespace Carvino
             shiftCutRemaining = Mathf.Max(0f, shiftCutRemaining - deltaTime);
             ElapsedSeconds += deltaTime;
 
-            float[] gearRatios = { 3.25f, 2.12f, 1.52f, 1.18f, 0.95f };
-            float ratio = gearRatios[Mathf.Clamp(gear - 1, 0, gearRatios.Length - 1)] * build.finalDrive;
-            State.Rpm = Mathf.Max(900f, SpeedMps / 2.05f * ratio * 60f);
+            CurrentOverallGearRatio = GearRatios[Mathf.Clamp(gear - 1, 0, GearRatios.Length - 1)] * build.finalDrive;
+            float coupledRpm = SpeedMps / (2f * Mathf.PI * tireRollingRadiusMeters) * CurrentOverallGearRatio * 60f;
+            float launchRpm = Mathf.Clamp(build.tune.launchRpm > 0f ? build.tune.launchRpm : build.launchRpm, 900f, build.engine.redlineRpm);
+            float clutchControlledRpm = gear == 1 && effectiveThrottle > .05f && coupledRpm < launchRpm
+                ? Mathf.Lerp(900f, launchRpm, effectiveThrottle)
+                : coupledRpm;
+            State.Rpm = Mathf.Max(900f, clutchControlledRpm);
             UpdateEngineState(deltaTime, effectiveThrottle, gear);
-            float usefulRpm = Mathf.Clamp01(State.Rpm / build.engine.redlineRpm);
-            float rpmEfficiency = Mathf.Clamp01(0.55f + usefulRpm * 0.65f);
-            if (State.Rpm > build.engine.redlineRpm) rpmEfficiency *= 0.35f;
-            float powerWatts = HorsepowerAtRpm(State.Rpm) * 745.7f * 0.84f * rpmEfficiency;
-            float powerForce = powerWatts / Mathf.Max(6f, SpeedMps);
+            float crankTorqueLbFt = TorqueAtRpm(State.Rpm);
+            WheelTorqueLbFt = crankTorqueLbFt * CurrentOverallGearRatio * build.DrivetrainEfficiency * effectiveThrottle;
+            const float poundFootToNewtonMeter = 1.35581795f;
+            AvailableDriveForceNewtons = Mathf.Max(0f, WheelTorqueLbFt * poundFootToNewtonMeter / tireRollingRadiusMeters);
             float staticFrontBias = build.vehicle.drivetrain == DrivetrainLayout.Fwd ? 0.62f : 0.54f;
             float wheelbaseM = build.vehicle.drivetrain == DrivetrainLayout.Fwd ? 2.57f : 2.92f;
             float baseCenterOfGravityHeightM = build.vehicle.drivetrain == DrivetrainLayout.Fwd ? 0.48f : 0.56f;
@@ -341,7 +360,7 @@ namespace Carvino
             float weightTransfer = build.MassKg * previousAcceleration * centerOfGravityHeightM / wheelbaseM * reboundControl;
             float frontLoad = Mathf.Max(0f, build.MassKg * 9.81f * staticFrontBias - weightTransfer);
             float rearLoad = Mathf.Max(0f, build.MassKg * 9.81f * (1f - staticFrontBias) + weightTransfer);
-            float requestedForce = powerForce * effectiveThrottle;
+            float requestedForce = AvailableDriveForceNewtons;
             float surfaceGrip = build.Grip * surface.gripMultiplier;
             float frontCapacity = tires[0].Update(frontLoad * 0.5f, build.vehicle.drivetrain == DrivetrainLayout.Fwd ? requestedForce * 0.5f : 0f, surfaceGrip, deltaTime)
                                   + tires[1].Update(frontLoad * 0.5f, build.vehicle.drivetrain == DrivetrainLayout.Fwd ? requestedForce * 0.5f : 0f, surfaceGrip, deltaTime);
@@ -349,12 +368,16 @@ namespace Carvino
                                  + tires[3].Update(rearLoad * 0.5f, build.vehicle.drivetrain == DrivetrainLayout.Rwd ? requestedForce * 0.5f : 0f, surfaceGrip, deltaTime)) * antiSquatControl;
             float tractionForce = (build.vehicle.drivetrain == DrivetrainLayout.Fwd ? frontCapacity : rearCapacity) * build.DrivenTractionMultiplier;
             float driveForce = Mathf.Min(tractionForce, requestedForce);
-            float aeroDrag = 0.5f * 1.225f * build.vehicle.dragCoefficient * build.vehicle.frontalAreaM2 * SpeedMps * SpeedMps;
-            float rollingResistance = build.MassKg * 9.81f * surface.rollingResistance;
-            float acceleration = Mathf.Max(0f, driveForce - aeroDrag - rollingResistance) / build.MassKg;
+            AppliedDriveForceNewtons = driveForce;
+            DrivenAxleLoadNewtons = build.vehicle.drivetrain == DrivetrainLayout.Fwd ? frontLoad : rearLoad;
+            AeroDragNewtons = 0.5f * 1.225f * build.vehicle.dragCoefficient * build.vehicle.frontalAreaM2 * SpeedMps * SpeedMps;
+            RollingResistanceNewtons = SpeedMps > .01f || driveForce > .01f
+                ? build.MassKg * 9.81f * surface.rollingResistance
+                : 0f;
+            LongitudinalAccelerationMps2 = (driveForce - AeroDragNewtons - RollingResistanceNewtons) / build.MassKg;
 
-            SpeedMps += acceleration * deltaTime;
-            previousAcceleration = acceleration;
+            SpeedMps = Mathf.Max(0f, SpeedMps + LongitudinalAccelerationMps2 * deltaTime);
+            previousAcceleration = LongitudinalAccelerationMps2;
             DistanceMeters += SpeedMps * deltaTime;
             int firstDrivenTire = build.vehicle.drivetrain == DrivetrainLayout.Fwd ? 0 : 2;
             TireTemperatureC = (tires[firstDrivenTire].AverageTemperatureC + tires[firstDrivenTire + 1].AverageTemperatureC) * 0.5f;
