@@ -11,7 +11,6 @@ namespace Carvino
         {
             new Vector2Int(0, 0), new Vector2Int(1920, 1080), new Vector2Int(2560, 1440), new Vector2Int(3840, 2160)
         };
-        private static readonly string[] QualityNames = { "PERFORMANCE", "BALANCED", "HIGH" };
         private static readonly string[] CameraNames = { "STANDARD", "CLOSER", "WIDER" };
         private int resolution;
         private int quality;
@@ -20,17 +19,23 @@ namespace Carvino
         private bool vSync;
         private float engineVolume;
         private string notice;
+        private VisualQualityProfile[] qualityProfiles;
+        private string[] qualityNames;
 
         public static float EngineVolume => PlayerPrefs.GetFloat("settings.engineVolume", 0.85f);
         public static int CameraStyle => PlayerPrefs.GetInt("settings.cameraStyle", 0);
 
         private void Start()
         {
-            resolution = PlayerPrefs.GetInt("settings.resolution", 0);
-            quality = PlayerPrefs.GetInt("settings.quality", 1);
-            cameraStyle = PlayerPrefs.GetInt("settings.cameraStyle", 0);
+            resolution = Mathf.Clamp(PlayerPrefs.GetInt("settings.resolution", 0), 0, Resolutions.Length - 1);
+            qualityProfiles = VisualQualityProfiles.GetProfilesForCurrentPlatform();
+            qualityNames = new string[qualityProfiles.Length];
+            for (int index = 0; index < qualityProfiles.Length; index++) qualityNames[index] = qualityProfiles[index].displayName;
+            VisualQualityProfile savedProfile = VisualQualityProfiles.ResolveSavedProfile(qualityProfiles, PlayerPrefs.GetInt("settings.quality", 1));
+            quality = VisualQualityProfiles.IndexOf(qualityProfiles, savedProfile);
+            cameraStyle = Mathf.Clamp(PlayerPrefs.GetInt("settings.cameraStyle", 0), 0, CameraNames.Length - 1);
             fullscreen = PlayerPrefs.GetInt("settings.fullscreen", Screen.fullScreen ? 1 : 0) == 1;
-            vSync = PlayerPrefs.GetInt("settings.vSync", 1) == 1;
+            vSync = PlayerPrefs.GetInt("settings.vSync", VisualQualityProfiles.IsMobileBuild ? 0 : 1) == 1;
             engineVolume = EngineVolume;
         }
 
@@ -49,6 +54,7 @@ namespace Carvino
         {
             PlayerPrefs.SetInt("settings.resolution", resolution);
             PlayerPrefs.SetInt("settings.quality", quality);
+            VisualQualityProfiles.SaveSelection(qualityProfiles[Mathf.Clamp(quality, 0, qualityProfiles.Length - 1)]);
             PlayerPrefs.SetInt("settings.cameraStyle", cameraStyle);
             PlayerPrefs.SetInt("settings.fullscreen", fullscreen ? 1 : 0);
             PlayerPrefs.SetInt("settings.vSync", vSync ? 1 : 0);
@@ -59,13 +65,12 @@ namespace Carvino
         private void ApplyDisplay()
         {
             Save();
-            int qualityLevel = quality == 0 ? 0 : quality == 1 ? Mathf.Max(0, (QualitySettings.names.Length - 1) / 2) : Mathf.Max(0, QualitySettings.names.Length - 1);
-            QualitySettings.SetQualityLevel(qualityLevel, true);
-            QualitySettings.vSyncCount = vSync ? 1 : 0;
+            VisualQualityProfile profile = qualityProfiles[Mathf.Clamp(quality, 0, qualityProfiles.Length - 1)];
+            VisualQualityProfiles.Apply(profile, vSync);
             Vector2Int selected = Resolutions[resolution];
             if (selected.x == 0) Screen.fullScreen = fullscreen;
             else Screen.SetResolution(selected.x, selected.y, fullscreen);
-            notice = "SETTINGS APPLIED";
+            notice = profile.displayName + " APPLIED — " + profile.ContentVariant.ToUpperInvariant() + " CONTENT TIER";
         }
 
         private void OnGUI()
@@ -78,7 +83,7 @@ namespace Carvino
             GUI.Label(new Rect(46, 140, 480, 22), "Resolution");
             resolution = Selector(425, 134, resolution, ResolutionNames);
             GUI.Label(new Rect(46, 184, 480, 22), "Graphics preset");
-            quality = Selector(425, 178, quality, QualityNames);
+            quality = Selector(425, 178, quality, qualityNames);
             GUI.Label(new Rect(46, 228, 480, 22), "V-sync");
             if (GUI.Button(new Rect(425, 222, 250, 32), vSync ? "ON" : "OFF")) vSync = !vSync;
 
@@ -87,7 +92,10 @@ namespace Carvino
             engineVolume = GUI.HorizontalSlider(new Rect(355, 334, 320, 18), engineVolume, 0f, 1f);
             GUI.Label(new Rect(46, 372, 480, 22), "Race camera distance");
             cameraStyle = Selector(425, 366, cameraStyle, CameraNames);
-            GUI.Box(new Rect(46, 420, 629, 72), "4K is an optional Windows display mode for capable monitors. The prototype automatically scales its interface for high-resolution displays. Changes are saved locally.");
+            string platformText = VisualQualityProfiles.IsMobileBuild
+                ? "Mobile profiles prioritize battery life, thermal stability, and compact content."
+                : "PC profiles support higher-detail content and 4K output. Graphics and content tiers stay separate from gameplay physics.";
+            GUI.Box(new Rect(46, 420, 629, 72), platformText + " Changes are saved locally.");
 
             if (GUI.Button(new Rect(46, 526, 250, 40), "APPLY SETTINGS")) ApplyDisplay();
             if (GUI.Button(new Rect(316, 526, 250, 40), "BACK TO TITLE")) Back();
