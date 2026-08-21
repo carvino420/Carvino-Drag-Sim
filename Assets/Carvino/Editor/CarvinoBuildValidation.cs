@@ -98,6 +98,21 @@ namespace Carvino.Editor
             for (int frame = 0; frame < 300; frame++) warningCheck.Step(0.02f, 1f, 1);
             Require(warningCheck.State.Warning != "SYSTEMS NORMAL", "Unsafe tuning must produce a progressive engine warning.");
 
+            EngineCondition componentCondition = new EngineCondition();
+            componentCondition.ApplyWear(new EngineWearReport
+            {
+                RunDamage = .65f,
+                KnockWear = .8f,
+                HeatWear = .1f,
+                FuelWear = .1f,
+                DominantCause = "DETONATION / KNOCK"
+            });
+            Require(componentCondition.rings < componentCondition.valvetrain, "Knock damage must hurt rings more than the valvetrain according to component data.");
+            Require(componentCondition.lastDamageCause == "DETONATION / KNOCK", "Component condition must retain the last diagnosed damage cause.");
+            float damagedCondition = componentCondition.OverallHealth;
+            componentCondition.RepairTo(.98f);
+            Require(componentCondition.OverallHealth > damagedCondition && componentCondition.WeakestComponent.Length > 0, "Component repair must restore aggregate engine condition.");
+
             DragSimulation tireCheck = new DragSimulation(newBuild);
             Require(tireCheck.Tires.Count == 4 && tireCheck.Tires[0].Patches.Length == 3, "Tire model must expose four tires with three contact patches each.");
             float coldGrip = tireCheck.EffectiveTireGrip;

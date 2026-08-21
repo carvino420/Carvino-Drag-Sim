@@ -140,7 +140,7 @@ namespace Carvino.Editor
             light.transform.rotation = Quaternion.Euler(48f, -26f, 0f);
             CreatePrimitive("Menu Floor", PrimitiveType.Cube, new Vector3(0f, -0.3f, 0f), new Vector3(28f, 0.6f, 24f), new Color(0.055f, 0.06f, 0.07f));
             CreatePrimitive("Menu Back Wall", PrimitiveType.Cube, new Vector3(0f, 4f, 8f), new Vector3(28f, 8f, 0.45f), new Color(0.1f, 0.06f, 0.05f));
-            CreateTexturedPrimitive("Menu Night Strip Render", PrimitiveType.Cube, new Vector3(0f, 4.6f, 7.68f), new Vector3(25f, 14f, 0.12f), "Assets/Carvino/Art/Textures/carvino_dragway_night_02.png", Color.white, Vector2.one);
+            CreateTexturedPrimitive("Menu Night Strip Render", PrimitiveType.Cube, new Vector3(0f, 4.6f, 7.68f), new Vector3(25f, 14f, 0.12f), "Assets/Carvino/Art/Textures/carvino_dragway_night_02.png", Color.white, Vector2.one, true);
             CreateHatch("Menu Hatch", new Vector3(2.2f, 0.05f, 1.3f), new Color(0.78f, 0.07f, 0.04f));
             CreatePickup("Menu Pickup", new Vector3(-3.8f, 0.05f, 1.3f), new Color(0.08f, 0.18f, 0.42f));
             new GameObject("Main Menu Controller").AddComponent<MainMenuController>();
@@ -161,7 +161,7 @@ namespace Carvino.Editor
               light.color = new Color(.55f, .68f, 1f);
               light.transform.rotation = Quaternion.Euler(38f, -20f, 0f);
               CreatePrimitive("Controls Floor", PrimitiveType.Cube, new Vector3(0f, -.25f, 0f), new Vector3(26f, .5f, 18f), new Color(.05f, .06f, .08f));
-              CreateTexturedPrimitive("Controls Track Render", PrimitiveType.Cube, new Vector3(0f, 4.7f, 7.7f), new Vector3(25f, 14f, .12f), "Assets/Carvino/Art/Textures/carvino_dragway_night_02.png", Color.white, Vector2.one);
+              CreateTexturedPrimitive("Controls Track Render", PrimitiveType.Cube, new Vector3(0f, 4.7f, 7.7f), new Vector3(25f, 14f, .12f), "Assets/Carvino/Art/Textures/carvino_dragway_night_02.png", Color.white, Vector2.one, true);
               new GameObject("Controls Controller").AddComponent<ControlsController>();
               EditorSceneManager.SaveScene(controls, folder + "/Controls.unity");
           }
@@ -180,7 +180,7 @@ namespace Carvino.Editor
               light.color = new Color(.65f, .32f, .24f);
               light.transform.rotation = Quaternion.Euler(38f, -20f, 0f);
               CreatePrimitive("Settings Floor", PrimitiveType.Cube, new Vector3(0f, -.25f, 0f), new Vector3(26f, .5f, 18f), new Color(.045f, .05f, .065f));
-              CreateTexturedPrimitive("Settings Garage Render", PrimitiveType.Cube, new Vector3(0f, 4.7f, 7.7f), new Vector3(25f, 14f, .12f), "Assets/Carvino/Art/Textures/carvino_garage_moonlit_02.png", Color.white, Vector2.one);
+              CreateTexturedPrimitive("Settings Garage Render", PrimitiveType.Cube, new Vector3(0f, 4.7f, 7.7f), new Vector3(25f, 14f, .12f), "Assets/Carvino/Art/Textures/carvino_garage_moonlit_02.png", Color.white, Vector2.one, true);
               new GameObject("Settings Controller").AddComponent<SettingsController>();
               EditorSceneManager.SaveScene(settings, folder + "/Settings.unity");
           }
@@ -199,7 +199,7 @@ namespace Carvino.Editor
               light.color = new Color(1f, .52f, .25f);
               light.transform.rotation = Quaternion.Euler(42f, -30f, 0f);
               CreatePrimitive("Career Asphalt", PrimitiveType.Cube, new Vector3(0f, -.3f, 0f), new Vector3(28f, .6f, 24f), new Color(.05f, .055f, .06f));
-              CreateTexturedPrimitive("Career Dragway Render", PrimitiveType.Cube, new Vector3(0f, 4.6f, 7.68f), new Vector3(25f, 14f, .12f), "Assets/Carvino/Art/Textures/carvino_dragway_night_02.png", Color.white, Vector2.one);
+              CreateTexturedPrimitive("Career Dragway Render", PrimitiveType.Cube, new Vector3(0f, 4.6f, 7.68f), new Vector3(25f, 14f, .12f), "Assets/Carvino/Art/Textures/carvino_dragway_night_02.png", Color.white, Vector2.one, true);
               CreateHatch("Career Hatch", new Vector3(2.2f, .05f, 1.3f), new Color(.78f, .07f, .04f));
               new GameObject("Career Controller").AddComponent<CareerController>();
               EditorSceneManager.SaveScene(career, folder + "/Career.unity");
@@ -219,7 +219,7 @@ namespace Carvino.Editor
               light.color = new Color(.35f, .55f, 1f);
               light.transform.rotation = Quaternion.Euler(38f, -20f, 0f);
               CreatePrimitive("Profile Floor", PrimitiveType.Cube, new Vector3(0f, -.25f, 0f), new Vector3(26f, .5f, 18f), new Color(.045f, .05f, .065f));
-              CreateTexturedPrimitive("Profile Garage Render", PrimitiveType.Cube, new Vector3(0f, 4.7f, 7.7f), new Vector3(25f, 14f, .12f), "Assets/Carvino/Art/Textures/carvino_garage_moonlit_02.png", Color.white, Vector2.one);
+              CreateTexturedPrimitive("Profile Garage Render", PrimitiveType.Cube, new Vector3(0f, 4.7f, 7.7f), new Vector3(25f, 14f, .12f), "Assets/Carvino/Art/Textures/carvino_garage_moonlit_02.png", Color.white, Vector2.one, true);
               new GameObject("Profile Controller").AddComponent<ProfileController>();
               EditorSceneManager.SaveScene(profile, folder + "/Profile.unity");
           }
@@ -239,7 +239,7 @@ namespace Carvino.Editor
             light.transform.rotation = Quaternion.Euler(42f, -30f, 0f);
             CreatePrimitive("Race Day Asphalt", PrimitiveType.Cube, new Vector3(0f, -0.3f, 0f), new Vector3(28f, 0.6f, 24f), new Color(0.07f, 0.075f, 0.08f));
             CreatePrimitive("Race Day Wall", PrimitiveType.Cube, new Vector3(0f, 4f, 8f), new Vector3(28f, 8f, 0.45f), new Color(0.10f, 0.06f, 0.05f));
-            CreateTexturedPrimitive("Race Day Night Strip Render", PrimitiveType.Cube, new Vector3(0f, 4.6f, 7.68f), new Vector3(25f, 14f, 0.12f), "Assets/Carvino/Art/Textures/carvino_dragway_night_02.png", Color.white, Vector2.one);
+              CreateTexturedPrimitive("Race Day Night Strip Render", PrimitiveType.Cube, new Vector3(0f, 4.6f, 7.68f), new Vector3(25f, 14f, 0.12f), "Assets/Carvino/Art/Textures/carvino_dragway_night_02.png", Color.white, Vector2.one, true);
             CreateHatch("Race Day Hatch", new Vector3(2.2f, 0.05f, 1.3f), new Color(0.72f, 0.08f, 0.04f));
             CreatePickup("Race Day Pickup", new Vector3(-3.6f, 0.05f, 1.3f), new Color(0.06f, 0.16f, 0.35f));
             new GameObject("Race Day Controller").AddComponent<RaceDayController>();
@@ -279,7 +279,7 @@ namespace Carvino.Editor
             light.transform.rotation = Quaternion.Euler(46f, -25f, 0f);
             CreatePrimitive("Garage Floor", PrimitiveType.Cube, new Vector3(0f, -0.25f, 0f), new Vector3(24f, 0.5f, 20f), new Color(0.12f, 0.12f, 0.13f));
             CreateTexturedPrimitive("Back Wall", PrimitiveType.Cube, new Vector3(0f, 4f, 8f), new Vector3(24f, 8f, 0.5f), "Assets/Carvino/Art/Textures/garage_wall_concrete_01.png", new Color(0.5f, 0.5f, 0.5f), new Vector2(5f, 2f));
-            CreateTexturedPrimitive("Garage Environment Render", PrimitiveType.Cube, new Vector3(0f, 4.8f, 7.67f), new Vector3(18f, 10f, 0.12f), "Assets/Carvino/Art/Textures/carvino_garage_moonlit_02.png", Color.white, Vector2.one);
+            CreateTexturedPrimitive("Garage Environment Render", PrimitiveType.Cube, new Vector3(0f, 4.8f, 7.67f), new Vector3(18f, 10f, 0.12f), "Assets/Carvino/Art/Textures/carvino_garage_moonlit_02.png", Color.white, Vector2.one, true);
             GameObject garageHatch = CreateHatch("Garage Hatch", new Vector3(0f, 0.05f, 0f), new Color(0.75f, 0.12f, 0.07f));
             GameObject garagePickup = CreatePickup("Garage Pickup", new Vector3(0f, 0.05f, 0f), new Color(0.72f, 0.12f, 0.06f));
             GameObject engineBayDisplay = new GameObject("Engine Inspection Bay");
@@ -379,7 +379,7 @@ namespace Carvino.Editor
               return flash;
           }
 
-        private static GameObject CreateTexturedPrimitive(string name, PrimitiveType type, Vector3 position, Vector3 scale, string texturePath, Color tint, Vector2 tiling)
+        private static GameObject CreateTexturedPrimitive(string name, PrimitiveType type, Vector3 position, Vector3 scale, string texturePath, Color tint, Vector2 tiling, bool flipVertical = false)
         {
             GameObject go = CreatePrimitive(name, type, position, scale, tint);
             Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
@@ -387,7 +387,8 @@ namespace Carvino.Editor
 
             Material material = go.GetComponent<Renderer>().sharedMaterial;
             material.mainTexture = texture;
-            material.mainTextureScale = tiling;
+            material.mainTextureScale = new Vector2(tiling.x, flipVertical ? -tiling.y : tiling.y);
+            material.mainTextureOffset = flipVertical ? new Vector2(0f, 1f) : Vector2.zero;
             return go;
         }
 

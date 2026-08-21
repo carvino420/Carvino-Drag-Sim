@@ -290,7 +290,7 @@ namespace Carvino
             payoutAwarded = true;
             payout = PlayerWon ? raceEvent.winPayout : raceEvent.lossPayout;
             personalBest = RaceHistory.RecordCompletedPass(build, simulation, trackSurface, raceDistance, PlayerWon);
-            GarageSession.ApplyRunWear(build.engine, build.engineIsNew, simulation.State.Damage);
+            GarageSession.ApplyRunWear(build.engine, build.engineIsNew, simulation.State);
             GarageSession.AddVteCoins(payout);
         }
 
@@ -300,7 +300,7 @@ namespace Carvino
             payoutAwarded = true;
             payout = 0;
             RaceHistory.RecordFailure();
-            GarageSession.ApplyRunWear(build.engine, build.engineIsNew, 1f);
+            GarageSession.ApplyRunWear(build.engine, build.engineIsNew, simulation.State);
         }
 
         private void ShiftUp()

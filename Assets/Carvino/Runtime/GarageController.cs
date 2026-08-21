@@ -13,6 +13,7 @@ namespace Carvino
         private int partsPage;
         private bool showHistory;
         private bool showAppearance;
+        private bool showBuildSheet;
         [SerializeField] private Transform hatchDisplay;
         [SerializeField] private Transform pickupDisplay;
         [SerializeField] private Renderer engineBlock;
@@ -75,6 +76,7 @@ namespace Carvino
             if (Input.GetKeyDown(KeyCode.E)) RotateVehicle(20f);
             if (Input.GetKeyDown(KeyCode.I)) ToggleInspection();
             if (Input.GetKeyDown(KeyCode.L)) showAppearance = !showAppearance;
+            if (Input.GetKeyDown(KeyCode.B)) showBuildSheet = !showBuildSheet;
             if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.JoystickButton6)) OpenDyno();
             if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.JoystickButton0)) StartRace();
             if (Input.GetKeyDown(KeyCode.Escape)) SceneManager.LoadScene("MainMenu");
@@ -317,12 +319,54 @@ namespace Carvino
             if (GUI.Button(new Rect(36, 406, 150, 48), "DYNO & TUNE")) OpenDyno();
             if (GUI.Button(new Rect(196, 406, 150, 48), "GO RACE")) StartRace();
             if (GUI.Button(new Rect(36, 462, 310, 36), "BACK TO TITLE")) SceneManager.LoadScene("MainMenu");
-            if (GUI.Button(new Rect(36, 506, 310, 34), "BUILD HISTORY & PERSONAL BESTS")) showHistory = !showHistory;
+            if (GUI.Button(new Rect(36, 506, 150, 34), "BUILD HISTORY")) showHistory = !showHistory;
+            if (GUI.Button(new Rect(196, 506, 150, 34), "BUILD SHEET [B]")) showBuildSheet = !showBuildSheet;
             GUI.Box(new Rect(36, 554, 692, 44), statusMessage);
-            GUI.Label(new Rect(54, 568, 650, 20), "Click buttons, use 1–8 for parts, Q / E to rotate, and I for engine inspection.");
+            GUI.Label(new Rect(54, 568, 650, 20), "Click buttons, use 1–8 for parts, Q / E to rotate, I to inspect, and B for your build sheet.");
             if (showHistory) DrawHistory(preview);
             if (showAppearance) DrawAppearance();
+            if (showBuildSheet) DrawBuildSheet(preview);
             CarvinoUi.End(previousMatrix);
+        }
+
+        private void DrawBuildSheet(DragBuild preview)
+        {
+            GUI.Box(new Rect(104, 70, 650, 500), "BUILD SHEET — READY-TO-RACE CHECK");
+            GUI.Label(new Rect(134, 112, 580, 24), Vehicle.displayName + "  •  " + (Vehicle.drivetrain == DrivetrainLayout.Fwd ? "FWD" : "RWD"));
+            GUI.Label(new Rect(134, 142, 580, 24), "ENGINE: " + Engine.displayName + "  •  " + (engineIsNew ? "NEW" : "USED") + "  •  " + EngineHealthLabel(GarageSession.GetEngineHealth(Engine.id, engineIsNew)));
+            float torqueEstimate = Engine.peakTorqueLbFt * preview.EngineHealthMultiplier * preview.TorqueMultiplier;
+            GUI.Label(new Rect(134, 172, 580, 24), "POWER ESTIMATE: " + preview.Horsepower.ToString("0") + " hp  •  " + torqueEstimate.ToString("0") + " lb-ft  •  " + preview.MassKg.ToString("0") + " kg");
+            GUI.Label(new Rect(134, 208, 280, 22), "INSTALLED PARTS (" + InstalledPartCount() + "/" + CarvinoCatalog.Upgrades.Count + ")");
+            GUI.Label(new Rect(442, 208, 270, 22), "STATUS");
+            for (int index = 0; index < CarvinoCatalog.Upgrades.Count; index++)
+            {
+                UpgradeSpec part = CarvinoCatalog.Upgrades[index];
+                bool installed = (upgradeMask & (1 << index)) != 0;
+                bool owned = GarageSession.OwnsPart(index);
+                float y = 236 + index * 23;
+                GUI.Label(new Rect(134, y, 300, 20), part.displayName);
+                GUI.Label(new Rect(442, y, 270, 20), installed ? "INSTALLED" : owned ? "OWNED — NOT INSTALLED" : "NOT OWNED — " + part.price.ToString("N0") + " VTC");
+            }
+            string readiness = GarageSession.OwnsEngine(Engine.id, engineIsNew) ? "ENGINE OWNED — YOU CAN RACE THIS BUILD" : "ENGINE NOT OWNED — BUY IT BEFORE RACING";
+            GUI.Box(new Rect(134, 524, 460, 28), readiness);
+            if (GUI.Button(new Rect(612, 524, 110, 28), "CLOSE")) showBuildSheet = false;
+        }
+
+        private int InstalledPartCount()
+        {
+            int count = 0;
+            for (int index = 0; index < CarvinoCatalog.Upgrades.Count; index++)
+                if ((upgradeMask & (1 << index)) != 0) count++;
+            return count;
+        }
+
+        private static string EngineHealthLabel(float health)
+        {
+            float percent = health * 100f;
+            if (percent >= 98f) return "EXCELLENT — " + percent.ToString("0") + "%";
+            if (percent >= 85f) return "SERVICEABLE — " + percent.ToString("0") + "%";
+            if (percent >= 65f) return "WORN — " + percent.ToString("0") + "% (REPAIR ADVISED)";
+            return "AT RISK — " + percent.ToString("0") + "% (REPAIR BEFORE RACING)";
         }
 
         private void DrawAppearance()

@@ -19,9 +19,32 @@ namespace Carvino
         public float TurboSpeedRpm;
         public float InjectorDutyPercent;
         public float Damage;
+        public float BaselineDamage;
+        public float KnockWear;
+        public float HeatWear;
+        public float FuelWear;
+        public float TurboWear;
+        public float OverRevWear;
         public bool IsFailed;
         public float SafetyPowerMultiplier = 1f;
         public string Warning = "SYSTEMS NORMAL";
+
+        /// <summary>Damage added during this pass, excluding condition loaded from the save.</summary>
+        public float RunDamage => Mathf.Clamp01(Damage - BaselineDamage);
+
+        public string DominantDamageCause
+        {
+            get
+            {
+                float highest = KnockWear;
+                string cause = highest > 0f ? "DETONATION / KNOCK" : "NORMAL WEAR";
+                if (HeatWear > highest) { highest = HeatWear; cause = "COOLING SYSTEM OVERHEAT"; }
+                if (FuelWear > highest) { highest = FuelWear; cause = "FUEL STARVATION / LEAN RUN"; }
+                if (TurboWear > highest) { highest = TurboWear; cause = "TURBO OVERSPEED"; }
+                if (OverRevWear > highest) cause = "ENGINE OVER-REV";
+                return cause;
+            }
+        }
 
         public float PowerDerate
         {

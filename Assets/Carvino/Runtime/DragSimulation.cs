@@ -253,6 +253,10 @@ namespace Carvino
             this.build = build;
             this.surface = surface ?? TrackSurfaceCatalog.PreppedStrip;
             this.finishDistanceMeters = Mathf.Clamp(finishDistanceMeters, EighthMileMeters, QuarterMileMeters);
+            // Persistent component condition feeds the same authoritative failure
+            // state used by racing, dyno output, AI, audio, and UI.
+            State.BaselineDamage = Mathf.Clamp01(1f - build.EngineHealthMultiplier);
+            State.Damage = State.BaselineDamage;
             float frontPressure = build.tune.frontTirePressurePsi;
             float rearPressure = build.tune.rearTirePressurePsi;
             float width = build.vehicle.drivetrain == DrivetrainLayout.Rwd ? 275f : 235f;
@@ -392,7 +396,18 @@ namespace Carvino
             float heatRisk = Mathf.InverseLerp(108f, 125f, State.CoolantTempC);
             float fuelRisk = Mathf.InverseLerp(92f, 100f, State.InjectorDutyPercent);
             float turboRisk = build.HasTurbo ? Mathf.InverseLerp(145000f, 156000f, State.TurboSpeedRpm) : 0f;
-            State.Damage = Mathf.Clamp01(State.Damage + (State.KnockIntensity * 0.0045f + heatRisk * 0.0025f + fuelRisk * 0.003f + turboRisk * 0.002f) * deltaTime);
+            float overRevRisk = Mathf.InverseLerp(build.engine.redlineRpm, build.engine.redlineRpm * 1.12f, State.Rpm);
+            float knockWear = State.KnockIntensity * 0.0045f * deltaTime;
+            float heatWear = heatRisk * 0.0025f * deltaTime;
+            float fuelWear = fuelRisk * 0.003f * deltaTime;
+            float turboWear = turboRisk * 0.002f * deltaTime;
+            float overRevWear = overRevRisk * 0.0035f * deltaTime;
+            State.KnockWear += knockWear;
+            State.HeatWear += heatWear;
+            State.FuelWear += fuelWear;
+            State.TurboWear += turboWear;
+            State.OverRevWear += overRevWear;
+            State.Damage = Mathf.Clamp01(State.Damage + knockWear + heatWear + fuelWear + turboWear + overRevWear);
             State.SafetyPowerMultiplier = 1f;
             State.Warning = "SYSTEMS NORMAL";
             if (State.KnockIntensity > 0.55f)
@@ -414,6 +429,11 @@ namespace Carvino
             {
                 State.SafetyPowerMultiplier = Mathf.Min(State.SafetyPowerMultiplier, Mathf.Lerp(0.88f, 0.58f, heatRisk));
                 State.Warning = "OVERHEAT — POWER REDUCTION";
+            }
+            if (overRevRisk > 0.1f)
+            {
+                State.SafetyPowerMultiplier = Mathf.Min(State.SafetyPowerMultiplier, Mathf.Lerp(0.90f, 0.52f, overRevRisk));
+                State.Warning = "OVER-REV — VALVETRAIN RISK";
             }
             if (State.Damage > 0.55f && State.Warning == "SYSTEMS NORMAL") State.Warning = "MISFIRE — ENGINE DAMAGE";
             State.IsFailed = State.Damage >= 0.9f;

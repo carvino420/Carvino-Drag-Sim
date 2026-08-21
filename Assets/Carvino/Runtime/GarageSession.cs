@@ -132,14 +132,32 @@ namespace Carvino
 
         public static float GetEngineHealth(string engineId, bool isNew)
         {
-            return PlayerPrefs.GetFloat(EngineHealthKey(engineId, isNew), isNew ? 1f : 0.93f);
+            return GetEngineCondition(engineId, isNew).OverallHealth;
+        }
+
+        public static EngineCondition GetEngineCondition(string engineId, bool isNew)
+        {
+            float legacyHealth = PlayerPrefs.GetFloat(EngineHealthKey(engineId, isNew), isNew ? 1f : 0.93f);
+            EngineCondition condition = new EngineCondition
+            {
+                rings = LoadComponentHealth(engineId, isNew, "rings", legacyHealth),
+                bearings = LoadComponentHealth(engineId, isNew, "bearings", legacyHealth),
+                headGasket = LoadComponentHealth(engineId, isNew, "head_gasket", legacyHealth),
+                valvetrain = LoadComponentHealth(engineId, isNew, "valvetrain", legacyHealth),
+                turbo = LoadComponentHealth(engineId, isNew, "turbo", legacyHealth),
+                lastDamageCause = PlayerPrefs.GetString(EngineConditionKey(engineId, isNew) + ".last_cause", "NORMAL WEAR")
+            };
+            return condition;
         }
 
         public static int RepairCost(EngineSpec engine, bool isNew)
         {
             float targetHealth = isNew ? 1f : 0.98f;
-            float repairNeeded = Mathf.Clamp01(targetHealth - GetEngineHealth(engine.id, isNew));
-            return Mathf.CeilToInt(repairNeeded * engine.price * 1.2f);
+            EngineCondition condition = GetEngineCondition(engine.id, isNew);
+            float weightedRepair = 0f;
+            foreach (EngineComponentWearSpec spec in EngineComponentWearCatalog.All)
+                weightedRepair += Mathf.Max(0f, targetHealth - condition.GetHealth(spec.id)) * spec.repairWeight;
+            return Mathf.CeilToInt(weightedRepair * engine.price * 1.2f);
         }
 
         public static bool TryRepairEngine(EngineSpec engine, bool isNew)
@@ -148,16 +166,28 @@ namespace Carvino
             int cost = RepairCost(engine, isNew);
             if (VteCoins < cost) return false;
             VteCoins -= cost;
-            PlayerPrefs.SetFloat(EngineHealthKey(engine.id, isNew), isNew ? 1f : 0.98f);
+            EngineCondition condition = GetEngineCondition(engine.id, isNew);
+            condition.RepairTo(isNew ? 1f : 0.98f);
+            SaveEngineCondition(engine.id, isNew, condition);
             SaveTune();
             return true;
         }
 
         public static void ApplyRunWear(EngineSpec engine, bool isNew, float runDamage)
         {
-            float health = GetEngineHealth(engine.id, isNew);
-            float wear = 0.0015f + Mathf.Clamp01(runDamage) * 0.45f;
-            PlayerPrefs.SetFloat(EngineHealthKey(engine.id, isNew), Mathf.Clamp(health - wear, 0.25f, 1f));
+            ApplyRunWear(engine, isNew, EngineWearReport.Legacy(runDamage));
+        }
+
+        public static void ApplyRunWear(EngineSpec engine, bool isNew, EngineState state)
+        {
+            ApplyRunWear(engine, isNew, EngineWearReport.FromState(state));
+        }
+
+        public static void ApplyRunWear(EngineSpec engine, bool isNew, EngineWearReport report)
+        {
+            EngineCondition condition = GetEngineCondition(engine.id, isNew);
+            condition.ApplyWear(report);
+            SaveEngineCondition(engine.id, isNew, condition);
             PlayerPrefs.Save();
         }
 
@@ -186,6 +216,23 @@ namespace Carvino
 
         private static string EngineOwnershipKey(string engineId, bool isNew) => engineId + (isNew ? ":new" : ":used");
         private static string EngineHealthKey(string engineId, bool isNew) => "carvino.engine_health." + engineId + (isNew ? ".new" : ".used");
+        private static string EngineConditionKey(string engineId, bool isNew) => "carvino.engine_condition." + engineId + (isNew ? ".new" : ".used");
+
+        private static float LoadComponentHealth(string engineId, bool isNew, string componentId, float fallback)
+        {
+            return Mathf.Clamp(PlayerPrefs.GetFloat(EngineConditionKey(engineId, isNew) + "." + componentId, fallback), .05f, 1f);
+        }
+
+        private static void SaveEngineCondition(string engineId, bool isNew, EngineCondition condition)
+        {
+            string key = EngineConditionKey(engineId, isNew);
+            foreach (EngineComponentWearSpec spec in EngineComponentWearCatalog.All)
+                PlayerPrefs.SetFloat(key + "." + spec.id, condition.GetHealth(spec.id));
+            PlayerPrefs.SetString(key + ".last_cause", condition.lastDamageCause);
+            // Keep the original aggregate key current so older builds and existing
+            // save tools continue to read a valid condition value.
+            PlayerPrefs.SetFloat(EngineHealthKey(engineId, isNew), condition.OverallHealth);
+        }
 
         public static void ApplyUpgrades(DragBuild build)
         {
