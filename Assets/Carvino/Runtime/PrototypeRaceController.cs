@@ -67,8 +67,12 @@ namespace Carvino
             if (CarvinoInput.StagePressed && state == RaceState.Garage) StartCountdown();
             if (CarvinoInput.LaunchPressed) TryLaunch();
             if (CarvinoInput.ShiftPressed) ShiftUp();
-            if ((state == RaceState.Finished || state == RaceState.RedLight || state == RaceState.Failed) && (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.JoystickButton6)))
-                SceneManager.LoadScene("Garage");
+            if (IsTerminalResult)
+            {
+                if (Input.GetKeyDown(KeyCode.R)) ResetRun();
+                if (Input.GetKeyDown(KeyCode.G) || Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.JoystickButton6)) SceneManager.LoadScene("Garage");
+                if (Input.GetKeyDown(KeyCode.M)) SceneManager.LoadScene("MainMenu");
+            }
 
             if (state == RaceState.Staged || state == RaceState.Countdown) TickCountdown();
             exhaustFlashTimer = Mathf.Max(0f, exhaustFlashTimer - Time.deltaTime);
@@ -284,6 +288,8 @@ namespace Carvino
             }
         }
 
+        private bool IsTerminalResult => state == RaceState.Finished || state == RaceState.RedLight || state == RaceState.Failed;
+
         private void AwardRacePayout()
         {
             if (payoutAwarded) return;
@@ -346,7 +352,23 @@ namespace Carvino
             GUI.Label(new Rect(32, 450, 405, 20), $"{trackSurface.displayName}: {trackSurface.gripMultiplier:0.00} grip  •  Rival: {(opponentFailed ? "ENGINE TROUBLE" : opponentFinished ? "FINISHED" : "RUNNING")}  •  {opponentReferenceMph:0} mph");
             string bestEt = RaceHistory.BestEt(build, trackSurface, raceDistance) > 0f ? RaceHistory.BestEt(build, trackSurface, raceDistance).ToString("0.000") + "s" : "--";
             GUI.Label(new Rect(32, 474, 405, 20), $"{raceDistance.displayName} PB: {bestEt}  •  {RaceHistory.BestTrapMph(build, trackSurface, raceDistance):0.0} mph  •  Career: {RaceHistory.TotalWins} wins / {RaceHistory.TotalPasses} passes{(personalBest ? "  •  NEW PB!" : string.Empty)}");
+            if (IsTerminalResult) DrawResultActions();
             CarvinoUi.End(previousMatrix);
+        }
+
+        private void DrawResultActions()
+        {
+            float panelX = CarvinoUi.Width - 470f;
+            GUI.Box(new Rect(panelX, 52f, 412f, 346f), "TIME SLIP — RUN COMPLETE");
+            GUI.Label(new Rect(panelX + 24f, 92f, 360f, 28f), RaceResult, new GUIStyle(GUI.skin.label) { fontSize = 18, fontStyle = FontStyle.Bold, wordWrap = true, normal = { textColor = state == RaceState.Finished && PlayerWon ? new Color(.35f, .95f, .48f) : new Color(1f, .42f, .2f) } });
+            GUI.Label(new Rect(panelX + 24f, 140f, 360f, 22f), $"ET  {simulation.ElapsedSeconds:0.000}s     TRAP  {simulation.FinishTrapMph:0.0} mph");
+            GUI.Label(new Rect(panelX + 24f, 166f, 360f, 22f), $"REACTION  {(reactionSeconds >= 0f ? reactionSeconds.ToString("0.000") : "--")}s     60 FT  {Split(simulation.SixtyFootSeconds)}");
+            GUI.Label(new Rect(panelX + 24f, 192f, 360f, 22f), $"1/8  {Split(simulation.EighthMileSeconds)} @ {simulation.EighthMileMph:0.0} mph");
+            GUI.Label(new Rect(panelX + 24f, 218f, 360f, 22f), $"PAYOUT  +{payout:N0} V-TECoins     WALLET  {GarageSession.VteCoins:N0}");
+            if (GUI.Button(new Rect(panelX + 24f, 260f, 114f, 44f), "RACE AGAIN [R]")) ResetRun();
+            if (GUI.Button(new Rect(panelX + 148f, 260f, 106f, 44f), "GARAGE [G]")) SceneManager.LoadScene("Garage");
+            if (GUI.Button(new Rect(panelX + 264f, 260f, 116f, 44f), "MENU [M]")) SceneManager.LoadScene("MainMenu");
+            GUI.Label(new Rect(panelX + 24f, 318f, 360f, 20f), "Full stats, tire condition, and build data stay saved.");
         }
 
         private static string Split(float value) => value > 0f ? value.ToString("0.000") : "--";

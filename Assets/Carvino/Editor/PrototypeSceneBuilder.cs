@@ -29,7 +29,7 @@ namespace Carvino.Editor
               light.color = new Color(.48f, .63f, 1f);
               light.transform.rotation = Quaternion.Euler(42f, -28f, 0f);
 
-              CreateTexturedPrimitive("Asphalt", PrimitiveType.Cube, new Vector3(0f, -0.25f, 210f), new Vector3(15.5f, 0.5f, 460f), "Assets/Carvino/Art/Textures/drag_strip_asphalt_01.png", new Color(.22f, .235f, .26f), new Vector2(4f, 120f));
+            CreateTexturedPrimitive("Asphalt", PrimitiveType.Cube, new Vector3(0f, -0.25f, 210f), new Vector3(15.5f, 0.5f, 460f), "Assets/Carvino/Art/Textures/carvino_pc_prepped_asphalt_01.png", new Color(.22f, .235f, .26f), new Vector2(4f, 120f));
               CreatePrimitive("Grass", PrimitiveType.Cube, new Vector3(0f, -0.65f, 210f), new Vector3(115f, 0.35f, 460f), new Color(.035f, .10f, .055f));
               CreatePrimitive("Left Barrier", PrimitiveType.Cube, new Vector3(-8.15f, 0.45f, 210f), new Vector3(0.4f, 0.9f, 460f), new Color(.45f, .46f, .46f));
               CreatePrimitive("Right Barrier", PrimitiveType.Cube, new Vector3(8.15f, 0.45f, 210f), new Vector3(0.4f, 0.9f, 460f), new Color(.45f, .46f, .46f));

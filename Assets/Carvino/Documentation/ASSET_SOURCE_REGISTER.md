@@ -8,6 +8,25 @@ Record an entry here before importing an external asset into the playable game.
 | carvino-pickup-91 | Original prototype pickup | Carvino project | Original | Yes | placeholder source | placeholder source | In game |
 | carvino-trackside-scoreboards-01 | Original procedural finish-line scoreboards | `Assets/Carvino/Editor/TracksideScoreboardBuilder.cs` | Original | Yes | primitive geometry, no textures | primitive geometry, no textures | In game |
 | carvino-pc-garage-bay-dressing-01 | Original garage workbench, locker, lighting, and bay markers | `Assets/Carvino/Editor/GarageBayDressingBuilder.cs` | Original | Yes | 30 static primitives, no textures | can be omitted or merged into lower-detail garage tier | In game |
+| carvino-starter-pavilion-01 | Original procedural starter-side timing pavilion | `Assets/Carvino/Editor/TracksideStarterPavilionBuilder.cs` | Original | Yes | 24 static primitives, no textures | can be omitted from mobile or merged into a low-detail static strip pass | In game |
+| carvino-pc-prepped-asphalt-01 | Original prepped drag-strip asphalt material | `Assets/Carvino/Art/Textures/carvino_pc_prepped_asphalt_01.png` | Original | Yes | 2048px, mipmapped, aniso 8, high-quality standalone compression | downscale to 1024px / lower compression tier | In game |
+
+## carvino-pc-prepped-asphalt-01 review
+
+- **Source / author:** Original Carvino texture created for this project; no external photo, logo, or copied track material was used.
+- **Rights / branding:** Commercially usable original asset. No manufacturer or venue marks are present.
+- **Resolution / tiers:** 2048 × 2048 PNG source for the PC prototype. Unity import uses repeat wrapping, mipmaps, anisotropic filtering level 8, and standalone compression quality 100. Future Ultra can use a new true 4K source; Performance/mobile uses a 1024px derivative.
+- **Unity setup:** Assigned by `PrototypeSceneBuilder.cs` to the quarter-mile asphalt when explicitly rebuilding generated scenes.
+- **Review:** 2026-08-21, Carvino PC Texture/Material Artist.
+
+## carvino-starter-pavilion-01 review
+
+- **Source / author:** Original Carvino procedural geometry created in `TracksideStarterPavilionBuilder.cs`.
+- **Rights / branding:** No external asset, badge, logo, copied signage, text, source mesh, or texture used; suitable for commercial distribution.
+- **Geometry:** One small trackside pavilion at the starter end with simple room, roof, windows, stairs, rails, and lights. 24 low-poly Unity primitive renderers; colliders are removed because all parts are visual-only.
+- **Textures / tiers:** None. PC uses flat steel, glass-color, concrete, and emissive materials. The mobile tier can omit it or merge it into a simplified static strip dressing pass.
+- **Unity setup:** Baked into the quarter-mile scene via **Carvino → Art → Add Original Starter Pavilion**. The editor helper is excluded from player builds.
+- **Review:** 2026-08-21, Carvino PC Environment/Level Artist.
 
 ## carvino-pc-garage-bay-dressing-01 review
 

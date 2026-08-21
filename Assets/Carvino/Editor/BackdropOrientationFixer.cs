@@ -28,10 +28,13 @@ namespace Carvino.Editor
                 foreach (Renderer renderer in Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
                 {
                     if (renderer == null || renderer.sharedMaterial == null || !renderer.gameObject.name.Contains("Render")) continue;
-                    Material material = renderer.sharedMaterial;
+                    Material material = new Material(renderer.sharedMaterial);
+                    renderer.sharedMaterial = material;
                     Vector2 scale = material.mainTextureScale;
                     material.mainTextureScale = new Vector2(Mathf.Abs(scale.x), -Mathf.Abs(scale.y));
                     material.mainTextureOffset = new Vector2(0f, 1f);
+                    EditorUtility.SetDirty(material);
+                    EditorUtility.SetDirty(renderer);
                 }
                 EditorSceneManager.SaveOpenScenes();
             }
