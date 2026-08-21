@@ -4,8 +4,27 @@ namespace Carvino
     public static class CareerProgress
     {
         public static int Wins => RaceHistory.TotalWins;
-        public static string RankName => Wins >= 5 ? "DRAGWAY REGULAR" : Wins >= 2 ? "UP-AND-COMER" : "ROOKIE";
-        public static bool IsEventUnlocked(int eventIndex) => eventIndex == 0 || (eventIndex == 1 ? Wins >= 1 : Wins >= 3);
-        public static string UnlockText(int eventIndex) => eventIndex == 0 ? "OPEN NOW" : eventIndex == 1 ? "WIN 1 CAREER RACE" : "WIN 3 CAREER RACES";
+        public static string RankName => Wins >= 9 ? "DRAGWAY FINALIST" : Wins >= 6 ? "TRACK VETERAN" : Wins >= 3 ? "UP-AND-COMER" : Wins >= 1 ? "LOCAL RACER" : "ROOKIE";
+
+        public static bool IsEventUnlocked(int eventIndex) => Wins >= RequiredWins(eventIndex);
+
+        public static string UnlockText(int eventIndex)
+        {
+            int required = RequiredWins(eventIndex);
+            return required == 0 ? "OPEN NOW" : "WIN " + required + " CAREER RACE" + (required == 1 ? string.Empty : "S");
+        }
+
+        private static int RequiredWins(int eventIndex)
+        {
+            switch (eventIndex)
+            {
+                case 0: return 0;
+                case 1: return 1;
+                case 2: return 3;
+                case 3: return 4;
+                case 4: return 6;
+                default: return 9;
+            }
+        }
     }
 }

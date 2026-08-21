@@ -16,7 +16,7 @@ namespace Carvino
         private void OnGUI()
         {
             Matrix4x4 previous = CarvinoUi.Begin();
-            GUI.Box(new Rect(18, 18, 920, 650), "CARVINO — CAREER");
+            GUI.Box(new Rect(18, 18, 920, 760), "CARVINO — CAREER");
             GUI.Label(new Rect(46, 54, 760, 34), "BUILD YOUR NAME AT THE DRAGWAY", HeaderStyle(26, Color.white));
             GUI.Label(new Rect(48, 94, 760, 22), $"PROFILE: {PlayerProfile.DriverName}  •  RANK: {CareerProgress.RankName}  •  {RaceHistory.TotalWins} WINS / {RaceHistory.TotalPasses} PASSES  •  {GarageSession.VteCoins:N0} VTC", HeaderStyle(14, new Color(.72f, .76f, .78f)));
             GUI.Label(new Rect(48, 124, 320, 22), "CAREER RACE LENGTH");
@@ -27,19 +27,22 @@ namespace Carvino
             {
                 RaceEvent raceEvent = RaceEventSession.Events[i];
                 bool unlocked = CareerProgress.IsEventUnlocked(i);
-                float y = 174 + i * 106;
+                int column = i % 2;
+                int row = i / 2;
+                float x = 48 + column * 410;
+                float y = 174 + row * 142;
                 GUI.color = unlocked ? new Color(.22f, .24f, .27f) : new Color(.11f, .12f, .14f);
                 string state = unlocked ? "ENTER EVENT" : "LOCKED — " + CareerProgress.UnlockText(i);
-                if (GUI.Button(new Rect(48, y, 814, 88), raceEvent.name + "\n" + raceEvent.description + "     Rival: " + raceEvent.opponent.displayName + "  •  WIN: " + raceEvent.winPayout.ToString("N0") + " VTC\n" + state))
+                if (GUI.Button(new Rect(x, y, 394, 118), raceEvent.name + "\n" + raceEvent.description + "\nRival: " + raceEvent.opponent.displayName + "  •  WIN: " + raceEvent.winPayout.ToString("N0") + " VTC\n" + state))
                 {
                     if (!unlocked) notice = CareerProgress.UnlockText(i);
                     else { RaceEventSession.Select(i); SceneManager.LoadScene("QuarterMilePrototype"); }
                 }
                 GUI.color = Color.white;
             }
-            GUI.Label(new Rect(48, 504, 660, 22), string.IsNullOrEmpty(notice) ? "Career wins unlock tougher races. Your car, parts, engine health, and tune all carry over." : notice, HeaderStyle(14, new Color(.96f, .62f, .24f)));
-            if (GUI.Button(new Rect(48, 556, 240, 40), "BACK TO GAME HUB")) SceneManager.LoadScene("MainMenu");
-            if (GUI.Button(new Rect(304, 556, 240, 40), "OPEN GARAGE")) SceneManager.LoadScene("Garage");
+            GUI.Label(new Rect(48, 616, 780, 22), string.IsNullOrEmpty(notice) ? "Career wins unlock tougher races. Your car, parts, engine health, and tune all carry over." : notice, HeaderStyle(14, new Color(.96f, .62f, .24f)));
+            if (GUI.Button(new Rect(48, 666, 240, 40), "BACK TO GAME HUB")) SceneManager.LoadScene("MainMenu");
+            if (GUI.Button(new Rect(304, 666, 240, 40), "OPEN GARAGE")) SceneManager.LoadScene("Garage");
             CarvinoUi.End(previous);
         }
 
