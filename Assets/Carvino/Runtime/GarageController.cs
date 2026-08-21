@@ -275,7 +275,8 @@ namespace Carvino
         private void OnGUI()
         {
             Matrix4x4 previousMatrix = CarvinoUi.Begin();
-            GUI.Box(new Rect(16, 16, 750, 638), "CARVINO WORKS — STARTER GARAGE");
+            ApplyReadableGarageSkin();
+            GUI.Box(new Rect(16, 16, 780, 662), "CARVINO WORKS — STARTER GARAGE");
             GUI.Label(new Rect(36, 58, 320, 28), "YOUR RIDE");
             GUI.Label(new Rect(36, 90, 320, 32), Vehicle.displayName);
             GUI.Label(new Rect(36, 122, 320, 24), Vehicle.drivetrain == DrivetrainLayout.Fwd ? "Front-wheel drive compact" : "Rear-wheel drive compact pickup");
@@ -296,7 +297,7 @@ namespace Carvino
             for (int index = 0; index < CarvinoCatalog.Upgrades.Count; index++)
                 if ((upgradeMask & (1 << index)) != 0) preview.upgrades.Add(CarvinoCatalog.Upgrades[index]);
 
-            GUI.Box(new Rect(390, 58, 338, 230), "BUILD PREVIEW");
+            GUI.Box(new Rect(390, 58, 360, 230), "BUILD PREVIEW");
             float stockPower = Engine.peakHorsepower * preview.EngineHealthMultiplier;
             float powerDelta = preview.Horsepower - stockPower;
             GUI.Label(new Rect(414, 98, 290, 24), $"Power: {preview.Horsepower:0} hp  ({(powerDelta >= 0f ? "+" : "")}{powerDelta:0})");
@@ -304,7 +305,7 @@ namespace Carvino
             GUI.Label(new Rect(414, 154, 290, 24), $"Grip rating: {preview.Grip:0.00}");
             GUI.Label(new Rect(414, 182, 290, 24), $"Engine: {(engineIsNew ? "NEW — 100% health" : "USED — 93% health")}");
             GUI.Label(new Rect(414, 206, 290, 24), $"Swap price: {preview.EngineCost:N0} VTC  •  {(GarageSession.OwnsEngine(Engine.id, engineIsNew) ? "OWNED" : "NOT OWNED")}");
-            GUI.Label(new Rect(414, 238, 290, 24), $"Parts: {PartNameList()}");
+            GUI.Label(new Rect(414, 238, 316, 24), $"Parts: {InstalledPartCount()} installed — full list [B]");
             GUI.Label(new Rect(414, 218, 290, 20), inspectionController != null && inspectionController.InspectionOpen ? "GARAGE VIEW: ENGINE INSPECTION" : "GARAGE VIEW: VEHICLE TURNTABLE");
             GUI.Label(new Rect(414, 262, 180, 20), "PARTS INVENTORY");
             int pageCount = Mathf.CeilToInt(CarvinoCatalog.Upgrades.Count / 6f);
@@ -330,14 +331,33 @@ namespace Carvino
             if (GUI.Button(new Rect(142, 506, 106, 34), "HEALTH [H]")) showEngineHealth = !showEngineHealth;
             if (GUI.Button(new Rect(256, 506, 90, 34), "SHEET [B]")) showBuildSheet = !showBuildSheet;
             if (GUI.Button(new Rect(36, 610, 122, 28), "CONTROLS [K]")) showControls = !showControls;
-            GUI.Box(new Rect(36, 554, 692, 44), statusMessage);
-            GUI.Label(new Rect(170, 614, 550, 20), "1–8 parts  •  Q / E rotate  •  I inspect  •  H health  •  B sheet  •  K controls");
+            GUI.Box(new Rect(36, 554, 714, 50), statusMessage);
+            GUI.Label(new Rect(170, 618, 570, 28), "1–8 parts  •  Q / E rotate  •  I inspect  •  H health  •  B sheet  •  K controls");
             if (showHistory) DrawHistory(preview);
             if (showAppearance) DrawAppearance();
             if (showBuildSheet) DrawBuildSheet(preview);
             if (showEngineHealth) DrawEngineHealth();
             if (showControls) DrawGarageControls();
             CarvinoUi.End(previousMatrix);
+        }
+
+        /// <summary>
+        /// The shared UI is intentionally compact, but the garage is where players make purchasing
+        /// decisions.  Give it a dedicated, readable PC presentation without changing its layout
+        /// or input paths.  CarvinoUi still supplies resolution scaling for 1080p through 4K.
+        /// </summary>
+        private static void ApplyReadableGarageSkin()
+        {
+            GUI.skin.label.fontSize = 16;
+            GUI.skin.label.alignment = TextAnchor.MiddleLeft;
+            GUI.skin.button.fontSize = 16;
+            GUI.skin.button.fontStyle = FontStyle.Bold;
+            GUI.skin.button.alignment = TextAnchor.MiddleCenter;
+            GUI.skin.button.wordWrap = true;
+            GUI.skin.box.fontSize = 18;
+            GUI.skin.box.fontStyle = FontStyle.Bold;
+            GUI.skin.box.alignment = TextAnchor.UpperLeft;
+            GUI.skin.box.padding = new RectOffset(14, 14, 10, 10);
         }
 
         private void DrawGarageControls()
