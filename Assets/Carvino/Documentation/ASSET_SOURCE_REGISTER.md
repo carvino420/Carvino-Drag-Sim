@@ -4,8 +4,10 @@ Record an entry here before importing an external asset into the playable game.
 
 | Asset ID | Asset | Source/author | License | Commercial use verified | PC tier | Mobile tier | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| carvino-hatch-93 | Original 1993-era compact three-door hatch | Carvino project | Original | Yes | 24,604-triangle detailed source | future reduced LOD required | In game |
-| carvino-pickup-91 | Original early-1990s compact pickup | `Assets/Carvino/Art/Models/CarvinoPickup_91.blend` | Original | Yes | 22,568-triangle LOD0 FBX | future reduced LOD required | In game - PC model pass 1 |
+| carvino-pc-procedural-pbr-material-library-01 | Five original tileable PBR-style surface sets | Carvino project, self-authored deterministic procedural generator | Original | Yes | five 2048px albedo / normal / packed-mask sets; BC7 Standalone, mipmapped, aniso 8 | exclude from prototype or generate 1024px derivatives later | Imported; ready for scene/material integration |
+| carvino-pc-ultra-track-atmosphere-01 | Original procedural PC Ultra+ lighting, lane treatment, and atmosphere | `Assets/Carvino/Editor/UltraTrackAtmosphereBuilder.cs` | Original | Yes | 10 low-poly lighting towers, visual-only lane surfaces, 21 soft-shadow lights, one directional key | omit towers, lane accents, and added lights | In game |
+| carvino-hatch-93 | Original 1993-era compact three-door hatch | Carvino project | Original | Yes | 24,604-triangle LOD0 + Ultra+ procedural PBR v2 | future reduced LOD required | In game - PC material pass 2 |
+| carvino-pickup-91 | Original early-1990s compact pickup | `Assets/Carvino/Art/Models/CarvinoPickup_91.blend` | Original | Yes | 22,568-triangle LOD0 + Ultra+ procedural PBR v2 | future reduced LOD required | In game - PC material pass 2 |
 | carvino-trackside-scoreboards-01 | Original procedural finish-line scoreboards | `Assets/Carvino/Editor/TracksideScoreboardBuilder.cs` | Original | Yes | primitive geometry, no textures | primitive geometry, no textures | In game |
 | carvino-pc-garage-bay-dressing-01 | Original garage workbench, locker, lighting, and bay markers | `Assets/Carvino/Editor/GarageBayDressingBuilder.cs` | Original | Yes | 30 static primitives, no textures | can be omitted or merged into lower-detail garage tier | In game |
 | carvino-starter-pavilion-01 | Original procedural starter-side timing pavilion | `Assets/Carvino/Editor/TracksideStarterPavilionBuilder.cs` | Original | Yes | 24 static primitives, no textures | can be omitted from mobile or merged into a low-detail static strip pass | In game |
@@ -13,14 +15,24 @@ Record an entry here before importing an external asset into the playable game.
 | carvino-pc-garage-presentation-01 | Original garage presentation lighting and wall detail | `Assets/Carvino/Editor/GaragePresentationBuilder.cs` | Original | Yes | 19 static primitives and 3 no-shadow spot lights | omit or reduce to one light and no wall detail | In game |
 | carvino-race-presentation-01 | Original procedural start/finish framing and distance beacons | `Assets/Carvino/Editor/TracksideRacePresentationBuilder.cs` | Original | Yes | 42 static primitives, no textures | omit the finish arch and reduce distance beacons | In game |
 
+## carvino-pc-procedural-pbr-material-library-01 review
+
+- **Source / author:** Original Carvino project artwork generated deterministically from a self-authored local C# texture generator. No web photo, scan, material pack, logo, trademark, game extraction, or third-party source texture was used. The Unity-side import policy is `Assets/Carvino/Editor/PbrTextureImportRules.cs`.
+- **Rights / branding:** Carvino owns this project-authored library and it is cleared for commercial use. All surfaces are generic/unbranded and contain no badge, wordmark, product label, venue identity, or recognizable source photograph.
+- **Contents / source resolution:** Five seamless 2048 × 2048 RGBA PNG material sets (15 PNGs total): `rubbered_drag_asphalt`, `garage_concrete`, `painted_metal`, `brushed_steel`, and `bedliner`. Each set has `_albedo` (sRGB), `_normal` (linear tangent-space normal), and `_mask` (linear packed R=metallic, G=ambient occlusion, B=perceptual roughness, A=normalized height). Total PNG source footprint is 37.63 MiB before Unity import.
+- **PC import / runtime budget:** Unity imports all fifteen assets with repeat wrap, trilinear filtering, mipmaps, streaming mipmaps, anisotropic level 8, 2048px cap, and Standalone BC7 High Quality compression. A fully resident set is approximately 16 MB in BC7 after the mip chain; the complete five-set PC library is approximately 80 MB when every map is resident. PC Ultra+ should stream only material sets that the active garage/strip scene needs.
+- **Mobile / lower tier:** These are authoring-quality PC assets. The mobile prototype should omit the library or use deliberately generated 1024px derivatives with lower-quality platform compression; no mobile derivative is registered as shipped art yet.
+- **Collision / use:** Texture-only assets: no colliders, meshes, scenes, materials, prefabs, runtime simulation, or legacy texture files were changed in this pass. Future materials can assign the sets to original dragway lane meshes, garage props, original vehicle metal, and pickup bed surfaces.
+- **Review:** 2026-08-21, Carvino PC Material Library worker. PNG signatures verified for all 15 files; Unity batch import succeeded with exit code 0 and confirmed normal maps, non-sRGB normal/mask data, sRGB albedo, repeat wrap, mipmaps, aniso 8, and Standalone BC7 settings.
+
 ## carvino-pickup-91 review
 
 - **Source / author:** Original Carvino mesh authored in Blender 5.2 at `Assets/Carvino/Art/Models/CarvinoPickup_91.blend`; Unity consumes the matching `CarvinoPickup_91.fbx`.
 - **Rights / branding:** Original geometry and generated materials. No Chevrolet badge, wordmark, logo, copied mesh, external texture, or protected game asset is present. The proportions reference the broad compact-pickup design language of the early 1990s while retaining original body, fascia, bed, trim, and wheel geometry.
 - **Geometry:** 22,568 triangles in the PC LOD0 source. The cab, lower body, hood/fenders, narrow flare bed, tailgate, bumpers, glass, lamps, interior, and underbody details are separate named objects. Four independent `Wheel_FL`, `Wheel_FR`, `Wheel_RL`, and `Wheel_RR` roots are retained for later suspension and wheel animation. No reduced LOD is included in this pass.
-- **Textures / materials:** No external or embedded bitmap textures. Original PBR-style Blender materials use paint, glass, rubber, liner, lamp, and metal parameters; Unity may replace them with project-native quality-tier materials later.
+- **Textures / materials:** No external or embedded bitmap textures. Ultra+ v2 uses original procedural Blender node materials: layered metallic-blue paint with clearcoat and microflake response, tinted transmissive glass, detailed lamp-lens surfaces, drag-radial grain, coarse bed liner, interior grain, brushed bumpers, and machined/dark wheel metals. FBX-compatible base PBR values are retained for Unity import. Studio review render: `Assets/Carvino/Art/Previews/CarvinoPickup_91_UltraPlus_MaterialPreview.png` (1600 × 900 PNG).
 - **Collision / import:** Visual mesh only; gameplay keeps its existing simplified vehicle physics/collider authority. FBX exports Y-up with a stable root, approximately 2.65 m wide including mirrors, 2.09 m high including tires, and 5.51 m long including bumpers.
-- **Review:** 2026-08-21, Carvino PC Vehicle Model worker. Blender source and exported FBX both verify at 22,568 triangles.
+- **Review:** 2026-08-21, Carvino PC Ultra+ Vehicle Materials worker. Material-only geometry lock preserved 120 mesh objects, 11,514 vertices, 11,097 polygons, and 22,568 evaluated triangles; Blender source and exported FBX retain the original names and upright axis convention.
 
 ## carvino-pc-garage-presentation-01 review
 
@@ -80,9 +92,18 @@ Record an entry here before importing an external asset into the playable game.
 - **Source / author:** Original Carvino geometry created in Blender at `Assets/Carvino/Art/Models/CarvinoHatch_93.blend`, with the Unity-ready interchange copy at `Assets/Carvino/Art/Models/CarvinoHatch_93.fbx`.
 - **Rights / branding:** Commercial-use original project asset. It uses broad early-1990s compact three-door proportions as design-era inspiration only. No Honda mesh, scan, blueprint, badge, wordmark, logo, photo texture, or proprietary source asset was used or included.
 - **Geometry:** 90 named mesh objects, 12,470 source vertices and 24,604 source triangles. The body shell has true wheel-arch openings; wheels, tires, rims, brake hardware, glass, lights, trim, interior, and body details remain separate named objects. Current LOD0 only; a reduced PC LOD1 and mobile LOD2 remain future work.
-- **Textures / materials:** No external bitmap textures. Original Blender materials use solid physically based values for metallic teal paint, trim, glass, lamps, rubber, alloy, brake hardware, and interior. Unity may remap these to Carvino production materials later without changing geometry rights.
+- **Textures / materials:** No external bitmap textures. Ultra+ v2 uses original procedural Blender node materials: layered metallic-teal paint with clearcoat and microflake response, tinted transmissive glass, detailed lamp-lens surfaces, street-rubber grain, interior/trim grain, machined alloy, brake rotors, and wheel hardware. FBX-compatible base PBR values are retained for Unity import. Studio review render: `Assets/Carvino/Art/Previews/CarvinoHatch_93_UltraPlus_MaterialPreview.png` (1600 × 900 PNG).
 - **Collision / import:** No mesh colliders are generated by the FBX importer. Unity import retains metric units, one-meter scale, Y-up / forward-axis conversion, readable vertex colors, and separate hierarchy objects. Runtime vehicle collision remains under the game's existing simplified physics authority.
-- **Review:** 2026-08-21, Carvino PC Vehicle Modeling worker.
+- **Review:** 2026-08-21, Carvino PC Ultra+ Vehicle Materials worker. Material-only geometry lock preserved 90 mesh objects, 12,470 vertices, 11,707 polygons, and 24,604 evaluated triangles; Blender source and exported FBX retain the original names and upright axis convention.
+
+## carvino-pc-ultra-track-atmosphere-01 review
+
+- **Source / author:** Original Carvino procedural scene dressing and lighting created in `UltraTrackAtmosphereBuilder.cs`.
+- **Rights / branding:** No external mesh, photo, logo, signage, mark, texture, copied venue layout, or protected game material is used. The pass uses only Unity primitive geometry and project-authored material values.
+- **Geometry:** Ten visual-only low-poly light towers (five per side), a pair of thin prepared-lane overlays, launch-box overlays, and three emissive guide strips. Colliders are removed from all new primitive props, preserving existing driving and timing authority.
+- **Textures / tiers:** No external bitmap texture is introduced. PC Ultra+ uses project-native materials plus soft-shadow spot lights and one cool directional key. Performance/mobile should omit this complete root object or retain only the non-light lane overlays.
+- **Unity setup:** Baked into `QuarterMilePrototype.unity` through **Carvino → Art → Add PC Ultra Track Atmosphere**. It does not rebuild the scene, touch vehicle assets, or change runtime scripts.
+- **Review:** 2026-08-21, Carvino PC Ultra Environment worker.
 
 ## Required fields for each new entry
 

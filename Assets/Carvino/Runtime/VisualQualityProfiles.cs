@@ -65,7 +65,10 @@ namespace Carvino
             new VisualQualityProfile("pc.performance", "PC PERFORMANCE", VisualContentTier.Pc, "Low", 120, 1, 0.75f, 35f, 0, false),
             new VisualQualityProfile("pc.balanced", "PC BALANCED", VisualContentTier.Pc, "High", 60, 0, 1.15f, 65f, 0, true),
             new VisualQualityProfile("pc.high", "PC HIGH", VisualContentTier.Pc, "Very High", 60, 0, 1.6f, 95f, 2, true),
-            new VisualQualityProfile("pc.ultra", "PC ULTRA", VisualContentTier.Pc, "Ultra", 60, 0, 2f, 140f, 4, true)
+            new VisualQualityProfile("pc.ultra", "PC ULTRA", VisualContentTier.Pc, "Ultra", 90, 0, 2f, 150f, 4, true),
+            // Ultra+ is deliberately a real PC-only preset: it maps to the highest Unity
+            // quality asset, keeps full-resolution mips, and leaves headroom for 4K displays.
+            new VisualQualityProfile("pc.ultra_plus", "PC ULTRA+", VisualContentTier.Pc, "Ultra+", 120, 0, 2.5f, 220f, 8, true)
         };
 
         private static readonly VisualQualityProfile[] MobileProfiles =
@@ -158,7 +161,10 @@ namespace Carvino
         private static void ApplySavedProfileAtBoot()
         {
             VisualQualityProfile[] profiles = GetProfilesForCurrentPlatform();
-            int legacyQuality = PlayerPrefs.GetInt("settings.quality", 1);
+            // Fresh PC installs should show the project at its intended presentation level.
+            // Existing saved choices (including the legacy integer) remain untouched.
+            int defaultQuality = IsMobileBuild ? 1 : profiles.Length - 1;
+            int legacyQuality = PlayerPrefs.GetInt("settings.quality", defaultQuality);
             bool vSync = PlayerPrefs.GetInt("settings.vSync", IsMobileBuild ? 0 : 1) == 1;
             Apply(ResolveSavedProfile(profiles, legacyQuality), vSync);
         }
