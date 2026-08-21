@@ -40,6 +40,7 @@ namespace Carvino
         private int payout;
         private float exhaustFlashTimer;
         private bool personalBest;
+        private bool showTelemetry;
         private RaceEvent raceEvent;
         private float OpponentReactionSeconds => opponentReactionSeconds;
         private float OpponentEtSeconds => opponentReferenceEt > 0f ? opponentReferenceEt : (raceEvent != null ? raceEvent.opponentEtSeconds : 12.8f);
@@ -62,6 +63,7 @@ namespace Carvino
             if (CarvinoInput.NextEnginePressed) CycleEngine();
             if (CarvinoInput.ToggleUpgradesPressed) { upgradesInstalled = !upgradesInstalled; ResetRun(); }
             if (CarvinoInput.ResetPressed) ResetRun();
+            if (Input.GetKeyDown(KeyCode.T)) showTelemetry = !showTelemetry;
             burningOut = state == RaceState.Garage && Input.GetKey(KeyCode.F);
             if (burningOut) simulation.Burnout(Time.deltaTime);
             if (CarvinoInput.StagePressed && state == RaceState.Garage) StartCountdown();
@@ -295,7 +297,7 @@ namespace Carvino
             if (payoutAwarded) return;
             payoutAwarded = true;
             payout = PlayerWon ? raceEvent.winPayout : raceEvent.lossPayout;
-            personalBest = RaceHistory.RecordCompletedPass(build, simulation, trackSurface, raceDistance, PlayerWon);
+            personalBest = RaceHistory.RecordCompletedPass(build, simulation, trackSurface, raceDistance, PlayerWon, RaceEventSession.IsCareerEvent);
             GarageSession.ApplyRunWear(build.engine, build.engineIsNew, simulation.State);
             GarageSession.AddVteCoins(payout);
         }
@@ -330,31 +332,39 @@ namespace Carvino
         private void OnGUI()
         {
             Matrix4x4 previousMatrix = CarvinoUi.Begin();
-            GUI.Box(new Rect(16, 16, 440, 486), "CARVINO DRAG SIM — v0.05 BUILD + RACE FOUNDATION");
-            GUI.Label(new Rect(32, 48, 360, 24), $"Vehicle: {build.vehicle.displayName}");
-            GUI.Label(new Rect(32, 72, 360, 24), $"Engine: {build.engine.displayName}");
-            GUI.Label(new Rect(32, 96, 360, 24), $"Power: {build.Horsepower:0} hp   Mass: {build.MassKg:0} kg");
-            GUI.Label(new Rect(32, 120, 360, 24), $"Distance: {simulation.DistanceMeters:0.0} / {simulation.FinishDistanceMeters:0.0} m  •  {raceDistance.displayName}");
-            GUI.Label(new Rect(32, 144, 380, 24), $"Speed: {simulation.SpeedMps * 2.23694f:0.0} mph   RPM: {simulation.EngineRpm:0}   Gear: {gear}");
-            GUI.Label(new Rect(32, 168, 405, 24), $"ET: {simulation.ElapsedSeconds:0.000}s @ {simulation.FinishTrapMph:0.0} mph   RT: {(reactionSeconds >= 0f ? reactionSeconds.ToString("0.000") : "--")}");
-            GUI.Label(new Rect(32, 192, 405, 24), $"60: {Split(simulation.SixtyFootSeconds)}  •  330: {Split(simulation.ThreeThirtyFootSeconds)}  •  1/8: {Split(simulation.EighthMileSeconds)} @ {simulation.EighthMileMph:0.0}");
-            GUI.Label(new Rect(32, 216, 405, 24), $"1000 ft: {Split(simulation.ThousandFootSeconds)}  •  {raceEvent.opponent.displayName}: {OpponentEtSeconds:0.000}s / {OpponentReactionSeconds:0.000} RT");
-            string status = state == RaceState.Finished ? "TIME SLIP COMPLETE — ESC/Back to garage" : state == RaceState.Failed ? "ENGINE FAILED — ESC/Back to garage for repairs" : state == RaceState.RedLight ? "RED LIGHT — ESC/Back to garage" : burningOut ? "BURNOUT — hold F to heat tires, then B to stage" : state == RaceState.Garage ? "Hold F for burnout  •  B to stage" : state == RaceState.Staged ? "STAGED — tree is coming" : state == RaceState.Countdown ? "TREE ACTIVE — wait for green" : "RACING — hold W, SHIFT to shift";
-            GUI.Label(new Rect(32, 240, 405, 24), status);
-            GUI.Label(new Rect(32, 264, 405, 24), RaceResult);
-            if (payoutAwarded) GUI.Label(new Rect(32, 282, 405, 20), $"PAYOUT: +{payout:N0} V-TECoins  •  Wallet: {GarageSession.VteCoins:N0}");
-            GUI.Label(new Rect(32, 306, 405, 24), "1/2 vehicle  •  E engine  •  U upgrades");
-            GUI.Label(new Rect(32, 330, 405, 24), $"Tune: {build.tune.airFuelRatio:0.0} AFR  •  {build.tune.ignitionTiming:0}° timing  •  {build.shiftRpm:0} shift RPM");
-            GUI.Label(new Rect(32, 354, 405, 20), $"{simulation.State.Warning}  •  power {simulation.State.PowerDerate * 100f:0}%");
-            GUI.Label(new Rect(32, 378, 405, 20), $"λ {simulation.State.Lambda:0.00}  •  boost {simulation.State.ManifoldPressurePsi - 14.7f:0.0} psi  •  coolant {simulation.State.CoolantTempC:0}°C  •  knock {simulation.State.KnockIntensity * 100f:0}%");
-            GUI.Label(new Rect(32, 402, 405, 20), $"Tires: {simulation.TireTemperatureC:0}°C  •  F {build.tune.frontTirePressurePsi:0} psi / R {build.tune.rearTirePressurePsi:0} psi  •  grip {simulation.EffectiveTireGrip:0.00}");
-            GUI.Label(new Rect(32, 426, 405, 20), $"Deflection: FL {simulation.Tires[0].AverageDeflectionMeters * 1000f:0.0} mm  FR {simulation.Tires[1].AverageDeflectionMeters * 1000f:0.0} mm  RL {simulation.Tires[2].AverageDeflectionMeters * 1000f:0.0} mm  RR {simulation.Tires[3].AverageDeflectionMeters * 1000f:0.0} mm");
-            GUI.Label(new Rect(32, 450, 405, 20), $"{trackSurface.displayName}: {trackSurface.gripMultiplier:0.00} grip  •  Rival: {(opponentFailed ? "ENGINE TROUBLE" : opponentFinished ? "FINISHED" : "RUNNING")}  •  {opponentReferenceMph:0} mph");
-            string bestEt = RaceHistory.BestEt(build, trackSurface, raceDistance) > 0f ? RaceHistory.BestEt(build, trackSurface, raceDistance).ToString("0.000") + "s" : "--";
-            GUI.Label(new Rect(32, 474, 405, 20), $"{raceDistance.displayName} PB: {bestEt}  •  {RaceHistory.BestTrapMph(build, trackSurface, raceDistance):0.0} mph  •  Career: {RaceHistory.TotalWins} wins / {RaceHistory.TotalPasses} passes{(personalBest ? "  •  NEW PB!" : string.Empty)}");
+            DrawDriverHud();
+            if (showTelemetry) DrawTelemetry();
             if (IsTerminalResult) DrawResultActions();
             CarvinoUi.End(previousMatrix);
         }
+
+        private void DrawDriverHud()
+        {
+            GUI.Box(new Rect(18, 18, 346, 154), raceEvent.name + "  •  " + raceDistance.displayName);
+            GUI.Label(new Rect(36, 48, 310, 20), "VS " + raceEvent.opponent.displayName + "   " + trackSurface.displayName, SmallLabel());
+            GUI.Label(new Rect(36, 68, 166, 52), (simulation.SpeedMps * 2.23694f).ToString("0") + " MPH", SpeedStyle());
+            GUI.Label(new Rect(212, 72, 124, 28), "GEAR " + gear, HeaderStyle(20));
+            GUI.Label(new Rect(212, 102, 124, 22), simulation.EngineRpm.ToString("0") + " RPM", SmallLabel());
+            GUI.Label(new Rect(36, 126, 300, 20), "ET " + simulation.ElapsedSeconds.ToString("0.000") + "    RT " + (reactionSeconds >= 0f ? reactionSeconds.ToString("0.000") : "--") + "    " + simulation.DistanceMeters.ToString("0") + "m", SmallLabel());
+            string status = state == RaceState.Finished ? "TIME SLIP COMPLETE" : state == RaceState.Failed ? "ENGINE FAILURE — RETURN TO GARAGE" : state == RaceState.RedLight ? "RED LIGHT" : burningOut ? "BURNOUT — HOLD F, THEN B TO STAGE" : state == RaceState.Garage ? "HOLD F TO HEAT TIRES  •  B TO STAGE" : state == RaceState.Staged ? "STAGED — TREE IS COMING" : state == RaceState.Countdown ? "TREE ACTIVE — WAIT FOR GREEN" : "W TO THROTTLE  •  SHIFT TO SHIFT";
+            GUI.Box(new Rect(CarvinoUi.Width * .5f - 220f, CarvinoUi.Height - 70f, 440f, 42f), status);
+            GUI.Label(new Rect(20, CarvinoUi.Height - 31f, 360f, 20f), "T: telemetry  •  C: camera  •  R: reset", SmallLabel());
+        }
+
+        private void DrawTelemetry()
+        {
+            GUI.Box(new Rect(18, 184, 346, 188), "LIVE TELEMETRY");
+            GUI.Label(new Rect(36, 218, 310, 20), "BOOST " + (simulation.State.ManifoldPressurePsi - 14.7f).ToString("0.0") + " psi   λ " + simulation.State.Lambda.ToString("0.00"), SmallLabel());
+            GUI.Label(new Rect(36, 242, 310, 20), "COOLANT " + simulation.State.CoolantTempC.ToString("0") + "°C   KNOCK " + (simulation.State.KnockIntensity * 100f).ToString("0") + "%", SmallLabel());
+            GUI.Label(new Rect(36, 266, 310, 20), "TIRE " + simulation.TireTemperatureC.ToString("0") + "°C   GRIP " + simulation.EffectiveTireGrip.ToString("0.00"), SmallLabel());
+            GUI.Label(new Rect(36, 290, 310, 20), "60 FT " + Split(simulation.SixtyFootSeconds) + "   1/8 " + Split(simulation.EighthMileSeconds), SmallLabel());
+            GUI.Label(new Rect(36, 314, 310, 20), simulation.State.Warning + "   POWER " + (simulation.State.PowerDerate * 100f).ToString("0") + "%", SmallLabel());
+            GUI.Label(new Rect(36, 338, 310, 20), "T again closes telemetry", SmallLabel());
+        }
+
+        private static GUIStyle SmallLabel() => new GUIStyle(GUI.skin.label) { fontSize = 13, fontStyle = FontStyle.Bold, normal = { textColor = new Color(.82f, .86f, .9f) } };
+        private static GUIStyle HeaderStyle(int size) => new GUIStyle(GUI.skin.label) { fontSize = size, fontStyle = FontStyle.Bold, normal = { textColor = new Color(.94f, .24f, .1f) } };
+        private static GUIStyle SpeedStyle() => new GUIStyle(GUI.skin.label) { fontSize = 34, fontStyle = FontStyle.Bold, normal = { textColor = Color.white } };
 
         private void DrawResultActions()
         {

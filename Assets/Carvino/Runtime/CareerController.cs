@@ -18,7 +18,7 @@ namespace Carvino
             Matrix4x4 previous = CarvinoUi.Begin();
             GUI.Box(new Rect(18, 18, 920, 760), "CARVINO — CAREER");
             GUI.Label(new Rect(46, 54, 760, 34), "BUILD YOUR NAME AT THE DRAGWAY", HeaderStyle(26, Color.white));
-            GUI.Label(new Rect(48, 94, 760, 22), $"PROFILE: {PlayerProfile.DriverName}  •  RANK: {CareerProgress.RankName}  •  {RaceHistory.TotalWins} WINS / {RaceHistory.TotalPasses} PASSES  •  {GarageSession.VteCoins:N0} VTC", HeaderStyle(14, new Color(.72f, .76f, .78f)));
+            GUI.Label(new Rect(48, 94, 760, 22), $"PROFILE: {PlayerProfile.DriverName}  •  RANK: {CareerProgress.RankName}  •  {RaceHistory.CareerWins} CAREER WINS / {RaceHistory.TotalPasses} PASSES  •  {GarageSession.VteCoins:N0} VTC", HeaderStyle(14, new Color(.72f, .76f, .78f)));
             GUI.Label(new Rect(48, 124, 320, 22), "CAREER RACE LENGTH");
             DrawDistance(RaceDistanceType.EighthMile, new Rect(240, 118, 150, 32));
             DrawDistance(RaceDistanceType.QuarterMile, new Rect(398, 118, 150, 32));
@@ -36,7 +36,7 @@ namespace Carvino
                 if (GUI.Button(new Rect(x, y, 394, 118), raceEvent.name + "\n" + raceEvent.description + "\nRival: " + raceEvent.opponent.displayName + "  •  WIN: " + raceEvent.winPayout.ToString("N0") + " VTC\n" + state))
                 {
                     if (!unlocked) notice = CareerProgress.UnlockText(i);
-                    else { RaceEventSession.Select(i); SceneManager.LoadScene("QuarterMilePrototype"); }
+                    else { RaceEventSession.SelectCareer(i); SceneManager.LoadScene("QuarterMilePrototype"); }
                 }
                 GUI.color = Color.white;
             }

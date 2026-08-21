@@ -100,9 +100,12 @@ namespace Carvino
 
         private static string NextCareerTarget()
         {
-            if (RaceHistory.TotalWins < 1) return "win Local Grudge to unlock Track Night";
-            if (RaceHistory.TotalWins < 3) return "win 3 career races to unlock Money Run";
-            return "improve your personal best and build for the Money Run";
+            if (RaceHistory.CareerWins < 1) return "win Local Grudge to unlock Track Night";
+            if (RaceHistory.CareerWins < 3) return "win 3 career races to unlock Money Run";
+            if (RaceHistory.CareerWins < 4) return "win 4 career races to unlock Street King";
+            if (RaceHistory.CareerWins < 6) return "win 6 career races to unlock Pickup Call-Out";
+            if (RaceHistory.CareerWins < 9) return "win 9 career races to unlock Dragway Final";
+            return "defend your Dragway Final crown and chase a new PB";
         }
 
         private static GUIStyle TitleStyle(int fontSize, Color color)

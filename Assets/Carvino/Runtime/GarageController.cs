@@ -14,6 +14,7 @@ namespace Carvino
         private bool showHistory;
         private bool showAppearance;
         private bool showBuildSheet;
+        private bool showEngineHealth;
         [SerializeField] private Transform hatchDisplay;
         [SerializeField] private Transform pickupDisplay;
         [SerializeField] private Renderer engineBlock;
@@ -77,6 +78,7 @@ namespace Carvino
             if (Input.GetKeyDown(KeyCode.I)) ToggleInspection();
             if (Input.GetKeyDown(KeyCode.L)) showAppearance = !showAppearance;
             if (Input.GetKeyDown(KeyCode.B)) showBuildSheet = !showBuildSheet;
+            if (Input.GetKeyDown(KeyCode.H)) showEngineHealth = !showEngineHealth;
             if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.JoystickButton6)) OpenDyno();
             if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.JoystickButton0)) StartRace();
             if (Input.GetKeyDown(KeyCode.Escape)) SceneManager.LoadScene("MainMenu");
@@ -319,14 +321,63 @@ namespace Carvino
             if (GUI.Button(new Rect(36, 406, 150, 48), "DYNO & TUNE")) OpenDyno();
             if (GUI.Button(new Rect(196, 406, 150, 48), "GO RACE")) StartRace();
             if (GUI.Button(new Rect(36, 462, 310, 36), "BACK TO TITLE")) SceneManager.LoadScene("MainMenu");
-            if (GUI.Button(new Rect(36, 506, 150, 34), "BUILD HISTORY")) showHistory = !showHistory;
-            if (GUI.Button(new Rect(196, 506, 150, 34), "BUILD SHEET [B]")) showBuildSheet = !showBuildSheet;
+            if (GUI.Button(new Rect(36, 506, 98, 34), "HISTORY")) showHistory = !showHistory;
+            if (GUI.Button(new Rect(142, 506, 106, 34), "HEALTH [H]")) showEngineHealth = !showEngineHealth;
+            if (GUI.Button(new Rect(256, 506, 90, 34), "SHEET [B]")) showBuildSheet = !showBuildSheet;
             GUI.Box(new Rect(36, 554, 692, 44), statusMessage);
-            GUI.Label(new Rect(54, 568, 650, 20), "Click buttons, use 1–8 for parts, Q / E to rotate, I to inspect, and B for your build sheet.");
+            GUI.Label(new Rect(54, 568, 650, 20), "Click buttons, use 1–8 for parts, Q / E to rotate, I to inspect, H for engine health, and B for your build sheet.");
             if (showHistory) DrawHistory(preview);
             if (showAppearance) DrawAppearance();
             if (showBuildSheet) DrawBuildSheet(preview);
+            if (showEngineHealth) DrawEngineHealth();
             CarvinoUi.End(previousMatrix);
+        }
+
+        private void DrawEngineHealth()
+        {
+            EngineCondition condition = GarageSession.GetEngineCondition(Engine.id, engineIsNew);
+            GUI.Box(new Rect(104, 72, 650, 470), "ENGINE HEALTH — DIAGNOSTIC & SERVICE");
+            GUI.Label(new Rect(134, 112, 590, 24), Engine.displayName + "  •  " + (engineIsNew ? "NEW" : "USED") + "  •  " + EngineHealthLabel(condition.OverallHealth));
+            GUI.Label(new Rect(134, 142, 590, 22), "LAST PASS NOTE: " + condition.lastDamageCause);
+            GUI.Label(new Rect(134, 174, 350, 22), "COMPONENT");
+            GUI.Label(new Rect(494, 174, 200, 22), "SERVICE STATUS");
+
+            for (int index = 0; index < EngineComponentWearCatalog.All.Count; index++)
+            {
+                EngineComponentWearSpec component = EngineComponentWearCatalog.All[index];
+                float health = condition.GetHealth(component.id);
+                float y = 204 + index * 44;
+                GUI.Label(new Rect(134, y, 350, 21), component.displayName + " — " + ComponentConcern(component.id));
+                GUI.Label(new Rect(494, y, 200, 21), ComponentServiceLabel(health));
+                GUI.HorizontalSlider(new Rect(134, y + 25, 540, 12), health, 0f, 1f);
+            }
+
+            int repairCost = GarageSession.RepairCost(Engine, engineIsNew);
+            GUI.Label(new Rect(134, 438, 520, 22), repairCost > 0 ? "A service restores this engine to " + (engineIsNew ? "100%" : "98%") + " health." : "This engine is already fully serviced.");
+            if (GUI.Button(new Rect(134, 472, 260, 34), "SERVICE ENGINE — " + repairCost.ToString("N0") + " VTC")) RepairSelectedEngine();
+            if (GUI.Button(new Rect(562, 472, 130, 34), "CLOSE")) showEngineHealth = false;
+        }
+
+        private static string ComponentConcern(string componentId)
+        {
+            switch (componentId)
+            {
+                case "rings": return "compression / blow-by";
+                case "bearings": return "oil pressure / knock";
+                case "head_gasket": return "heat / cylinder pressure";
+                case "valvetrain": return "over-rev protection";
+                case "turbo": return "overspeed / heat";
+                default: return "general condition";
+            }
+        }
+
+        private static string ComponentServiceLabel(float health)
+        {
+            float percent = health * 100f;
+            if (percent >= 98f) return "EXCELLENT — " + percent.ToString("0") + "%";
+            if (percent >= 85f) return "SERVICEABLE — " + percent.ToString("0") + "%";
+            if (percent >= 65f) return "WORN — " + percent.ToString("0") + "%";
+            return "AT RISK — " + percent.ToString("0") + "%";
         }
 
         private void DrawBuildSheet(DragBuild preview)

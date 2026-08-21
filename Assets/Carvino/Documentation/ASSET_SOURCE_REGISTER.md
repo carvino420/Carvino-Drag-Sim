@@ -10,6 +10,16 @@ Record an entry here before importing an external asset into the playable game.
 | carvino-pc-garage-bay-dressing-01 | Original garage workbench, locker, lighting, and bay markers | `Assets/Carvino/Editor/GarageBayDressingBuilder.cs` | Original | Yes | 30 static primitives, no textures | can be omitted or merged into lower-detail garage tier | In game |
 | carvino-starter-pavilion-01 | Original procedural starter-side timing pavilion | `Assets/Carvino/Editor/TracksideStarterPavilionBuilder.cs` | Original | Yes | 24 static primitives, no textures | can be omitted from mobile or merged into a low-detail static strip pass | In game |
 | carvino-pc-prepped-asphalt-01 | Original prepped drag-strip asphalt material | `Assets/Carvino/Art/Textures/carvino_pc_prepped_asphalt_01.png` | Original | Yes | 2048px, mipmapped, aniso 8, high-quality standalone compression | downscale to 1024px / lower compression tier | In game |
+| carvino-pc-garage-presentation-01 | Original garage presentation lighting and wall detail | `Assets/Carvino/Editor/GaragePresentationBuilder.cs` | Original | Yes | 19 static primitives and 3 no-shadow spot lights | omit or reduce to one light and no wall detail | In game |
+
+## carvino-pc-garage-presentation-01 review
+
+- **Source / author:** Original Carvino procedural geometry and lighting, created in `GaragePresentationBuilder.cs`.
+- **Rights / branding:** No external mesh, image, logo, badge, signage, text, or texture used; suitable for commercial distribution.
+- **Geometry:** 19 low-poly Unity primitive renderers: a rear wall treatment, trim, emissive strips, and an inset service-bay plate. Colliders are removed because every prop is visual-only.
+- **Lighting / tiers:** Three dynamic spot lights with shadows disabled for clean vehicle presentation at a minimal PC cost. The mobile tier can omit the complete pass or retain a single non-shadow fill light.
+- **Unity setup:** Baked into the Garage scene via **Carvino → Art → Add PC Garage Presentation Pass**. The editor helper is excluded from player builds.
+- **Review:** 2026-08-21, Carvino PC Visual-Quality worker.
 
 ## carvino-pc-prepped-asphalt-01 review
 

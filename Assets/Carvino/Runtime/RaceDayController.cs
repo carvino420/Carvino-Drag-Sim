@@ -28,8 +28,7 @@ namespace Carvino
                 GUI.color = selected ? new Color(0.82f, 0.18f, 0.08f) : new Color(0.16f, 0.18f, 0.2f);
                 if (GUI.Button(new Rect(x, y, 394, 86), raceEvent.name + "\n" + raceEvent.description + "\n" + raceEvent.opponent.displayName + "  •  WIN: " + raceEvent.winPayout.ToString("N0") + " VTC  •  LOSS: " + raceEvent.lossPayout.ToString("N0") + " VTC"))
                 {
-                    RaceEventSession.Select(i);
-                    SceneManager.LoadScene("QuarterMilePrototype");
+                    RaceEventSession.SelectFreePlay(i);
                 }
                 GUI.color = Color.white;
             }
@@ -38,8 +37,10 @@ namespace Carvino
             DrawSurfaceButton(TrackSurfaceType.PreppedStrip, new Rect(48, 514, 254, 38));
             DrawSurfaceButton(TrackSurfaceType.Street, new Rect(314, 514, 254, 38));
             DrawSurfaceButton(TrackSurfaceType.DampStreet, new Rect(580, 514, 254, 38));
+            if (GUI.Button(new Rect(590, 574, 244, 40), "START SELECTED RACE")) SceneManager.LoadScene("QuarterMilePrototype");
             if (GUI.Button(new Rect(48, 574, 240, 40), "BACK TO GAME HUB")) SceneManager.LoadScene("MainMenu");
-            GUI.Label(new Rect(308, 585, 520, 22), RaceSurfaceSession.Selected.description);
+            GUI.Label(new Rect(308, 585, 270, 22), RaceSurfaceSession.Selected.description);
+            GUI.Label(new Rect(48, 626, 786, 22), "Choose an event, distance, and surface first — then start the race.", new GUIStyle(GUI.skin.label) { fontSize = 14, normal = { textColor = new Color(.72f, .76f, .78f) } });
             CarvinoUi.End(previousMatrix);
         }
 

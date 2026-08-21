@@ -3,7 +3,7 @@ namespace Carvino
     /// <summary>Small local career gate for the prototype. Public competitive progression moves server-side later.</summary>
     public static class CareerProgress
     {
-        public static int Wins => RaceHistory.TotalWins;
+        public static int Wins => RaceHistory.CareerWins;
         public static string RankName => Wins >= 9 ? "DRAGWAY FINALIST" : Wins >= 6 ? "TRACK VETERAN" : Wins >= 3 ? "UP-AND-COMER" : Wins >= 1 ? "LOCAL RACER" : "ROOKIE";
 
         public static bool IsEventUnlocked(int eventIndex) => Wins >= RequiredWins(eventIndex);

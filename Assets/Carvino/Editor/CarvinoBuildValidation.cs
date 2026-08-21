@@ -17,12 +17,13 @@ namespace Carvino.Editor
             Require(File.Exists("Assets/Carvino/Scenes/RaceDay.unity"), "Race Day scene is missing.");
             Require(File.Exists("Assets/Carvino/Scenes/QuarterMilePrototype.unity"), "Race scene is missing.");
             Require(CarvinoCatalog.Vehicles.Count == 2, "Alpha must contain exactly two starter vehicles.");
-            Require(RaceEventSession.Events.Length >= 3, "Race Day needs three starter events.");
+            Require(RaceEventSession.Events.Length >= 6, "Race Day needs the six-event early career ladder.");
             Require(TrackSurfaceCatalog.PreppedStrip != null && !string.IsNullOrEmpty(RaceHistory.BuildKey(new DragBuild { vehicle = CarvinoCatalog.Vehicles[0], engine = CarvinoCatalog.FindEngine("d16") }, TrackSurfaceCatalog.PreppedStrip, RaceDistanceCatalog.QuarterMile)), "Race history needs data-driven build keys.");
             foreach (RaceEvent raceEvent in RaceEventSession.Events)
             {
                 Require(raceEvent.opponent != null && !string.IsNullOrEmpty(raceEvent.opponent.engineId), raceEvent.name + " needs an AI driver profile.");
                 Require(CarvinoCatalog.FindEngine(raceEvent.opponent.engineId).id == raceEvent.opponent.engineId, raceEvent.name + " AI uses an unknown engine.");
+                Require(TrackSurfaceCatalog.Get(raceEvent.careerSurface) != null, raceEvent.name + " needs a valid career surface.");
             }
             Require(TunePresets.All.Length >= 3 && TunePresets.All[0].price == 0, "Dyno needs a free safe base tune and purchasable tune presets.");
 
