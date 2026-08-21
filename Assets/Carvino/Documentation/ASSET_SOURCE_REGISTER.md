@@ -11,6 +11,7 @@ Record an entry here before importing an external asset into the playable game.
 | carvino-starter-pavilion-01 | Original procedural starter-side timing pavilion | `Assets/Carvino/Editor/TracksideStarterPavilionBuilder.cs` | Original | Yes | 24 static primitives, no textures | can be omitted from mobile or merged into a low-detail static strip pass | In game |
 | carvino-pc-prepped-asphalt-01 | Original prepped drag-strip asphalt material | `Assets/Carvino/Art/Textures/carvino_pc_prepped_asphalt_01.png` | Original | Yes | 2048px, mipmapped, aniso 8, high-quality standalone compression | downscale to 1024px / lower compression tier | In game |
 | carvino-pc-garage-presentation-01 | Original garage presentation lighting and wall detail | `Assets/Carvino/Editor/GaragePresentationBuilder.cs` | Original | Yes | 19 static primitives and 3 no-shadow spot lights | omit or reduce to one light and no wall detail | In game |
+| carvino-race-presentation-01 | Original procedural start/finish framing and distance beacons | `Assets/Carvino/Editor/TracksideRacePresentationBuilder.cs` | Original | Yes | 42 static primitives, no textures | omit the finish arch and reduce distance beacons | In game |
 
 ## carvino-pc-garage-presentation-01 review
 
@@ -20,6 +21,15 @@ Record an entry here before importing an external asset into the playable game.
 - **Lighting / tiers:** Three dynamic spot lights with shadows disabled for clean vehicle presentation at a minimal PC cost. The mobile tier can omit the complete pass or retain a single non-shadow fill light.
 - **Unity setup:** Baked into the Garage scene via **Carvino → Art → Add PC Garage Presentation Pass**. The editor helper is excluded from player builds.
 - **Review:** 2026-08-21, Carvino PC Visual-Quality worker.
+
+## carvino-race-presentation-01 review
+
+- **Source / author:** Original Carvino procedural geometry created in `TracksideRacePresentationBuilder.cs`.
+- **Rights / branding:** No external mesh, image, badge, logo, venue mark, signage, text, or source texture used; suitable for commercial distribution.
+- **Geometry:** A visual-only starting truss, starter pedestals/beacons, finish arch, and paired distance beacons. Approximately 42 low-poly Unity primitive renderers; colliders are removed, preserving race driving and timing behavior.
+- **Textures / tiers:** None. Flat metal/concrete and emission materials only. PC uses the complete pass; mobile may remove the finish arch and retain only a reduced set of five distance blocks.
+- **Unity setup:** Baked into the QuarterMilePrototype scene through **Carvino → Art → Add Race Presentation Pass**. The editor helper is excluded from player builds. It does not rebuild generated scenes or modify runtime code.
+- **Review:** 2026-08-21, Carvino Race Presentation worker.
 
 ## carvino-pc-prepped-asphalt-01 review
 

@@ -15,6 +15,7 @@ namespace Carvino
         private bool showAppearance;
         private bool showBuildSheet;
         private bool showEngineHealth;
+        private bool showControls;
         [SerializeField] private Transform hatchDisplay;
         [SerializeField] private Transform pickupDisplay;
         [SerializeField] private Renderer engineBlock;
@@ -59,6 +60,7 @@ namespace Carvino
             if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.JoystickButton4)) ChangeVehicle(-1);
             if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.JoystickButton5)) ChangeVehicle(1);
             if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.JoystickButton3)) ChangeEngine(1);
+            if (Input.GetKeyDown(KeyCode.DownArrow)) ChangeEngine(-1);
             if (Input.GetKeyDown(KeyCode.N) || Input.GetKeyDown(KeyCode.JoystickButton1)) engineIsNew = !engineIsNew;
             if (Input.GetKeyDown(KeyCode.U) || Input.GetKeyDown(KeyCode.JoystickButton2))
             {
@@ -79,6 +81,7 @@ namespace Carvino
             if (Input.GetKeyDown(KeyCode.L)) showAppearance = !showAppearance;
             if (Input.GetKeyDown(KeyCode.B)) showBuildSheet = !showBuildSheet;
             if (Input.GetKeyDown(KeyCode.H)) showEngineHealth = !showEngineHealth;
+            if (Input.GetKeyDown(KeyCode.K)) showControls = !showControls;
             if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.JoystickButton6)) OpenDyno();
             if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.JoystickButton0)) StartRace();
             if (Input.GetKeyDown(KeyCode.Escape)) SceneManager.LoadScene("MainMenu");
@@ -294,7 +297,9 @@ namespace Carvino
                 if ((upgradeMask & (1 << index)) != 0) preview.upgrades.Add(CarvinoCatalog.Upgrades[index]);
 
             GUI.Box(new Rect(390, 58, 338, 230), "BUILD PREVIEW");
-            GUI.Label(new Rect(414, 98, 290, 24), $"Power: {preview.Horsepower:0} hp");
+            float stockPower = Engine.peakHorsepower * preview.EngineHealthMultiplier;
+            float powerDelta = preview.Horsepower - stockPower;
+            GUI.Label(new Rect(414, 98, 290, 24), $"Power: {preview.Horsepower:0} hp  ({(powerDelta >= 0f ? "+" : "")}{powerDelta:0})");
             GUI.Label(new Rect(414, 126, 290, 24), $"Weight: {preview.MassKg:0} kg");
             GUI.Label(new Rect(414, 154, 290, 24), $"Grip rating: {preview.Grip:0.00}");
             GUI.Label(new Rect(414, 182, 290, 24), $"Engine: {(engineIsNew ? "NEW — 100% health" : "USED — 93% health")}");
@@ -324,13 +329,34 @@ namespace Carvino
             if (GUI.Button(new Rect(36, 506, 98, 34), "HISTORY")) showHistory = !showHistory;
             if (GUI.Button(new Rect(142, 506, 106, 34), "HEALTH [H]")) showEngineHealth = !showEngineHealth;
             if (GUI.Button(new Rect(256, 506, 90, 34), "SHEET [B]")) showBuildSheet = !showBuildSheet;
+            if (GUI.Button(new Rect(36, 610, 122, 28), "CONTROLS [K]")) showControls = !showControls;
             GUI.Box(new Rect(36, 554, 692, 44), statusMessage);
-            GUI.Label(new Rect(54, 568, 650, 20), "Click buttons, use 1–8 for parts, Q / E to rotate, I to inspect, H for engine health, and B for your build sheet.");
+            GUI.Label(new Rect(170, 614, 550, 20), "1–8 parts  •  Q / E rotate  •  I inspect  •  H health  •  B sheet  •  K controls");
             if (showHistory) DrawHistory(preview);
             if (showAppearance) DrawAppearance();
             if (showBuildSheet) DrawBuildSheet(preview);
             if (showEngineHealth) DrawEngineHealth();
+            if (showControls) DrawGarageControls();
             CarvinoUi.End(previousMatrix);
+        }
+
+        private void DrawGarageControls()
+        {
+            GUI.Box(new Rect(136, 104, 590, 438), "GARAGE CONTROLS — QUICK REFERENCE");
+            GUI.Label(new Rect(166, 146, 250, 24), "KEYBOARD");
+            GUI.Label(new Rect(166, 178, 520, 22), "Left / Right   Change vehicle");
+            GUI.Label(new Rect(166, 204, 520, 22), "Up / Down       Change engine");
+            GUI.Label(new Rect(166, 230, 520, 22), "N                New / used engine");
+            GUI.Label(new Rect(166, 256, 520, 22), "U                Starter bundle");
+            GUI.Label(new Rect(166, 282, 520, 22), "1–8              Buy / install parts");
+            GUI.Label(new Rect(166, 308, 520, 22), "Q / E            Rotate car");
+            GUI.Label(new Rect(166, 334, 520, 22), "I / L / H / B / D  Inspect / custom / health / sheet / dyno");
+            GUI.Label(new Rect(166, 376, 250, 24), "CONTROLLER");
+            GUI.Label(new Rect(166, 408, 520, 22), "LB / RB          Change vehicle");
+            GUI.Label(new Rect(166, 434, 520, 22), "Y / D-pad up     Change engine");
+            GUI.Label(new Rect(166, 460, 520, 22), "X                Starter bundle");
+            GUI.Label(new Rect(166, 486, 430, 22), "A                Race    •    Back: dyno");
+            if (GUI.Button(new Rect(590, 500, 106, 30), "CLOSE [K]")) showControls = false;
         }
 
         private void DrawEngineHealth()
