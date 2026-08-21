@@ -24,6 +24,9 @@ namespace Carvino.Editor
                 {
                     "Assets/Carvino/Scenes/MainMenu.unity",
                     "Assets/Carvino/Scenes/Controls.unity",
+                    "Assets/Carvino/Scenes/Settings.unity",
+                    "Assets/Carvino/Scenes/Career.unity",
+                    "Assets/Carvino/Scenes/Profile.unity",
                     "Assets/Carvino/Scenes/Garage.unity",
                     "Assets/Carvino/Scenes/Dyno.unity",
                     "Assets/Carvino/Scenes/RaceDay.unity",
